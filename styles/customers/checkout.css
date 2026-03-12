@@ -85,3 +85,105 @@
     flex-direction: column-reverse;
   }
 }
+/* Thiết kế cửa sổ thông báo giữa màn hình */
+.payment-modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0; width: 100%; height: 100%;
+    background-color: rgba(0,0,0,0.5);
+}
+.modal-content {
+    background-color: #fff;
+    margin: 10% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 400px;
+    text-align: center;
+    position: relative;
+}
+.modal-content img { width: 200px; margin: 10px 0; }
+.close-modal {
+    position: absolute; right: 15px; top: 10px;
+    font-size: 24px; cursor: pointer;
+}
+/* --- CSS CHO CỬA SỔ THANH TOÁN (MODAL) --- */
+
+/* Nền mờ bao phủ toàn màn hình */
+.payment-modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6); /* Làm tối nền */
+    align-items: center;
+    justify-content: center;
+}
+
+/* Khung nội dung chính ở giữa màn hình */
+.modal-content {
+    background-color: var(--white);
+    margin: 10% auto;
+    padding: 3rem;
+    border-radius: 1.5rem;
+    width: 90%;
+    max-width: 50rem;
+    text-align: center;
+    position: relative;
+    box-shadow: var(--box-shadow);
+    animation: fadeIn 0.3s ease;
+}
+
+/* Hiệu ứng hiện ra nhẹ nhàng */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nút đóng (X) */
+.close-modal {
+    position: absolute;
+    right: 2rem;
+    top: 1.5rem;
+    font-size: 3rem;
+    cursor: pointer;
+    color: var(--light-color);
+}
+
+.close-modal:hover {
+    color: var(--red);
+}
+
+/* Định dạng nội dung bên trong Modal */
+#paymentDetail h2 {
+    font-size: 2.5rem;
+    margin-bottom: 2rem;
+    text-transform: uppercase;
+    color: var(--black);
+}
+
+#paymentDetail img {
+    width: 20rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid #eee;
+    padding: 1rem;
+}
+
+#paymentDetail p {
+    font-size: 1.8rem;
+    color: var(--light-color);
+    margin-bottom: 1rem;
+}
+
+#paymentDetail b {
+    color: var(--black);
+}
+
+/* Nút xác nhận trong Modal */
+.modal-content .btn {
+    margin-top: 2rem;
+    width: 100%;
+}

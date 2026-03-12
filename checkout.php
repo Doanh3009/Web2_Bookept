@@ -119,14 +119,17 @@ if (isset($_POST['order_btn'])) {
                <input type="email" name="email" value="<?php echo $check['email']; ?>">
             </div>
             <div class="inputBox">
-               <span><i class="fa-solid fa-money-check-dollar"></i> payment method :</span>
-               <select name="method">
-                  <option value="cash on delivery">cash on delivery</option>
-                  <option value="credit card">credit card</option>
-                  <option value="paypal">paypal</option>
-                  <option value="momo">momo</option>
-               </select>
-            </div>
+   <span><i class="fa-solid fa-money-check-dollar"></i> payment method :</span>
+   <select name="method" id="payment-method">
+      <option value="cash on delivery">Cash on Delivery</option>
+      <option value="credit card">Credit Card</option>
+      <option value="paypal">Paypal</option>
+      <option value="momo">Momo E-wallet</option>
+   </select>
+</div>
+
+<div id="payment-instruction" style="margin-top: 20px; padding: 15px; border: 1px dashed #ccc; display: none; width: 100%; background: #f9f9f9; border-radius: 10px;">
+</div>
             <div class="inputBox">
                <span><i class="fa-solid fa-house"></i> house number :</span>
                <input required type="text" min="0" name="house-num" value="<?php echo $check['house_number']; ?>">
@@ -244,80 +247,87 @@ if (isset($_POST['order_btn'])) {
             <p style="color:red">$<?php echo $grand_total; ?></p>
          </div>
       </div>
-      <div id="paymentModal" class="payment-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5);">
-    <div class="modal-content" style="background-color: #fff; margin: 10% auto; padding: 25px; border-radius: 10px; width: 450px; text-align: center; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3);">
-        <span onclick="closeModal()" style="position: absolute; right: 15px; top: 10px; font-size: 28px; cursor: pointer; color: #888;">&times;</span>
-        <div id="paymentDetail">
-            </div>
+         <div id="paymentModal" class="payment-modal">
+            <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <div id="paymentDetail"></div>
     </div>
 </div>
-   </section>
+      </section>
 
    <?php include 'footer.php'; ?>
 
    <!-- custom js file link  -->
-   <script src="js/script.js">
-
-   </script>
+   <script src="js/script.js"></script>
 <script>
-const checkoutForm = document.querySelector('form[action=""]');
-const paymentModal = document.getElementById('paymentModal');
-const paymentDetail = document.getElementById('paymentDetail');
+const paymentSelect = document.getElementById('payment-method');
+const instructionDiv = document.getElementById('payment-instruction');
+const checkoutForm = document.querySelector('form');
 
-// Hàm đóng modal
-function closeModal() {
-    paymentModal.style.display = "none";
+// Function to show message similar to PHP $message[] style
+function showSystemMessage(msg) {
+    const messageContainer = document.createElement('div');
+    messageContainer.className = 'message';
+    messageContainer.innerHTML = `
+        <span>${msg}</span>
+        <i class="fas fa-times" onclick="this.parentElement.remove();"></i>
+    `;
+    // Insert at the top of the body or form
+    document.body.prepend(messageContainer);
 }
 
-// Xử lý khi bấm nút "Order Now"
-checkoutForm.onsubmit = function(e) {
-    const method = document.getElementById('payment-method').value;
-    
-    // Nếu chọn COD thì cho gửi form đi luôn như bình thường
-    if (method === 'cash on delivery') return true;
-
-    // Các phương thức khác: Chặn gửi form để hiện Modal
-    e.preventDefault();
-    paymentModal.style.display = "block";
+paymentSelect.addEventListener('change', function() {
+    const method = this.value;
+    instructionDiv.style.display = "block";
     
     let content = "";
-    if (method === 'momo') {
+    if (method === 'cash on delivery') {
+        instructionDiv.style.display = "none";
+    } else if (method === 'momo') {
         content = `
-            <h2 style="color: #ae2070; margin-bottom: 15px;">Thanh toán Momo</h2>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MoMoPay_Bookept" alt="QR Momo" style="width: 200px;">
-            <p style="font-size: 16px; margin: 10px 0;">Số tài khoản: <b>0987 654 321</b></p>
-            <p style="font-size: 16px;">Chủ TK: <b>BOOKEPT SHOP</b></p>
-            <p style="color: red; font-style: italic;">Vui lòng chuyển khoản đúng số tiền đơn hàng.</p>
+            <h3 style="color: #ae2070; font-size: 2rem;">Momo Payment:</h3>
+            <p style="font-size: 1.6rem;">Transfer to: <b>0987 654 321</b> (BOOKEPT SHOP)</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=Momo" style="width: 15rem; margin: 1rem 0;">
+            <button type="button" class="btn" onclick="confirmMomo()" style="background:#ae2070;">Confirm Paid</button>
         `;
     } else if (method === 'credit card') {
         content = `
-            <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-credit-card"></i> Nhập thẻ tín dụng</h2>
-            <input type="text" placeholder="Số thẻ (16 chữ số)" style="width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd;">
-            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                <input type="text" placeholder="MM/YY" style="flex: 1; padding: 10px; border: 1px solid #ddd;">
-                <input type="password" placeholder="CVV" style="flex: 1; padding: 10px; border: 1px solid #ddd;">
+            <h3 style="font-size: 2rem;">Card Details:</h3>
+            <input type="text" id="cc-num" placeholder="Card Number" style="width:100%; padding:1rem; margin:1rem 0; border:var(--border);">
+            <div style="display:flex; gap:1rem;">
+                <input type="text" id="cc-exp" placeholder="MM/YY" style="flex:1; padding:1rem; border:var(--border);">
+                <input type="text" id="cc-cvv" placeholder="CVV" style="flex:1; padding:1rem; border:var(--border);">
             </div>
-            <p style="font-size: 13px; color: #666;">Thông tin thẻ sẽ được mã hóa bảo mật.</p>
         `;
     } else if (method === 'paypal') {
         content = `
-            <h2 style="color: #003087; margin-bottom: 15px;"><i class="fa-brands fa-paypal"></i> Cổng Paypal</h2>
-            <p style="font-size: 16px; margin-bottom: 20px;">Bạn sẽ được kết nối tới tài khoản:<br><b>payment@bookept.com</b></p>
-            <div style="font-size: 40px; color: #003087; margin-bottom: 15px;"><i class="fa-brands fa-cc-paypal"></i></div>
+            <h3 style="color: #003087; font-size: 2rem;">Paypal:</h3>
+            <p style="font-size: 1.6rem;">Send to: <b>payment@bookept.com</b></p>
         `;
     }
+    instructionDiv.innerHTML = content;
+});
 
-    // Thêm nút xác nhận cuối modal
-    paymentDetail.innerHTML = content + `
-        <button type="button" onclick="confirmPayment()" class="btn" style="width: 100%; margin-top: 20px;">Xác nhận đã thanh toán</button>
-    `;
-};
-
-// Hàm gửi form thật sau khi khách đã xác nhận trên Modal
-function confirmPayment() {
-    alert("Thanh toán thành công! Hệ thống đang xử lý đơn hàng.");
-    checkoutForm.submit();
+function confirmMomo() {
+    showSystemMessage('Momo payment confirmed! Processing order...');
+    setTimeout(() => { document.querySelector('input[name="order_btn"]').click(); }, 1500);
 }
+
+checkoutForm.onsubmit = function(e) {
+    const method = paymentSelect.value;
+    if (method === 'credit card') {
+        const num = document.getElementById('cc-num').value.trim();
+        const exp = document.getElementById('cc-exp').value.trim();
+        const cvv = document.getElementById('cc-cvv').value.trim();
+
+        if (!num || !exp || !cvv) {
+            e.preventDefault();
+            // This displays exactly like your PHP $message[] alert
+            showSystemMessage('Please fill in all credit card details!');
+            return false;
+        }
+    }
+};
 </script>
 </body>
 

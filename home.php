@@ -65,7 +65,6 @@ if (isset($_POST['add_to_cart'])) {
 </head>
 
 <body>
-<h1>XIN CHÀO MỌI NGƯỜI</h1>
    <?php include 'header.php'; ?>
 
    <section class="home">

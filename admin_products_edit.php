@@ -35,34 +35,16 @@ if (!isset($admin_id)) {
 $update_id = $_GET['edit_product'];
 if (isset($_POST['edit'])) {
     $update_name = $_POST['Name'];
-    
-    // --- LOGIC TÍNH GIÁ BÌNH QUÂN ---
-    $add_quantity = isset($_POST['AddQuantity']) ? (int)$_POST['AddQuantity'] : 0;
-    $new_import_price = isset($_POST['NewImportPrice']) ? (float)$_POST['NewImportPrice'] : 0;
+    $update_cate = $_POST['CategoryId'];
     $profit_margin = isset($_POST['ProfitMargin']) ? (float)$_POST['ProfitMargin'] : 0;
 
-    // 1. Lấy tồn kho và giá nhập cũ từ database
-    $get_stock = mysqli_query($conn, "SELECT Quantity, ImportPrice FROM products WHERE Id = '$update_id'");
+    // Lấy Giá nhập hiện tại từ Database (không cho phép sửa ở trang này)
+    $get_stock = mysqli_query($conn, "SELECT ImportPrice FROM products WHERE Id = '$update_id'");
     $row = mysqli_fetch_assoc($get_stock);
-    $current_qty = (int)$row['Quantity'];
     $current_import_price = (float)$row['ImportPrice'];
 
-    // 2. Tính số lượng mới và giá nhập bình quân
-    $new_total_qty = $current_qty + $add_quantity;
-    if ($new_total_qty > 0) {
-        if ($add_quantity > 0) {
-            // Công thức: (Tồn * Giá cũ + Nhập * Giá mới) / (Tồn + Nhập)
-            $new_avg_import_price = (($current_qty * $current_import_price) + ($add_quantity * $new_import_price)) / $new_total_qty;
-        } else {
-            $new_avg_import_price = $current_import_price; // Nếu không nhập thêm thì giữ nguyên giá cũ
-        }
-    } else {
-        $new_avg_import_price = 0;
-    }
-
-    // 3. Tính giá bán mới dựa trên % lợi nhuận
-    $new_selling_price = $new_avg_import_price * (1 + ($profit_margin / 100));
-    // -------------------------------
+    // Tính lại giá bán dựa trên % lợi nhuận mới do admin vừa nhập
+    $new_selling_price = $current_import_price * (1 + ($profit_margin / 100));
 
     $update_old_image = $_FILES['Image']['name'];
     $update_image = $_FILES['Image']['name'];
@@ -72,15 +54,12 @@ if (isset($_POST['edit'])) {
     $update_language = $_POST['Language'];
     $update_cover =  $_POST['CoverType'];
     $update_des = $_POST['Description'];
-    $update_cate = $_POST['CategoryId'];
 
-    // Cập nhật tất cả vào Database
+    // Cập nhật Database (Lưu ý: KHÔNG update Quantity và ImportPrice ở đây)
     mysqli_query($conn, "UPDATE products SET 
         CategoryId = '$update_cate',
         Name = '$update_name', 
-        ImportPrice = '$new_avg_import_price',
         Price = '$new_selling_price', 
-        Quantity = '$new_total_qty',
         MainAuthor = '$update_author',
         Publisher = '$update_publisher', 
         PublicationYear = '$update_pub_year', 
@@ -118,17 +97,10 @@ if (isset($_POST['edit'])) {
 
 
 <body>
-    <header class="header">
-        <button class="menu-icon-btn">
-            <div class="menu-icon">
-                <i class="fa-regular fa-bars"></i>
-            </div>
-        </button>
-    </header>
     <div class="container">
         <aside class="sidebar open">
             <div class="top-sidebar">
-                <a href="admin_main.php" class="channel-logo"><img src="image/homelogo.jpeg" alt="Channel Logo"></a>
+                <a href="admin_main.php" class="channel-logo"><img src="public/icon/logo.png" alt="Channel Logo"></a>
                 <div class="hidden-sidebar your-channel"><img src="" style="height: 30px;" alt="">
                 </div>
             </div>
@@ -144,6 +116,12 @@ if (isset($_POST['edit'])) {
                         <a href="admin_products.php" class="sidebar-link">
                             <div class="sidebar-icon"><i class="fa fa-book"></i></div>
                             <div class="hidden-sidebar">Products</div>
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item tab-content">
+                        <a href="admin_imports.php" class="sidebar-link">
+                            <div class="sidebar-icon"><i class="fa fa-truck"></i></div>
+                            <div class="hidden-sidebar">Imports</div>
                         </a>
                     </li>
                     <li id="customers" class="sidebar-list-item tab-content">
@@ -327,20 +305,42 @@ if (isset($_POST['edit'])) {
                                 $sell_p = $fetch_products_edit['Price'];
                                 $current_margin = ($import_p > 0) ? round((($sell_p / $import_p) - 1) * 100, 2) : 0;
                             ?>
-                            
+
                             <div class="form-group">
-                                <label for="add-quanitiy" class="form-label">Nhập thêm SL (Tồn kho hiện tại: <?php echo $fetch_products_edit['Quantity']; ?>)</label>
-                                <input id="add-quanitiy" name="AddQuantity" value="0" type="number" min="0" class="form-control">
+                                <label class="form-label">Current Inventory (Import to increase quantity)</label>
+                                <input value="<?php echo $fetch_products_edit['Quantity']; ?>" type="number" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;">
                             </div>
 
                             <div class="form-group">
-                                <label for="gia-nhap-moi" class="form-label">Giá nhập lô mới (Giá nhập cũ: <?php echo round($import_p, 2); ?>)</label>
-                                <input id="gia-nhap-moi" name="NewImportPrice" value="0" type="number" min="0" step="any" class="form-control">
+                                <label class="form-label">Current Average Import Price</label>
+                                <input value="<?php echo round($import_p, 2); ?>" type="number" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;">
                             </div>
 
                             <div class="form-group">
-                                <label for="loi-nhuan" class="form-label">Tỷ lệ lợi nhuận (%)</label>
-                                <input id="loi-nhuan" name="ProfitMargin" value="<?php echo $current_margin; ?>" type="number" min="0" step="any" required class="form-control">
+                                <label for="profit-margin" class="form-label">Profit Margin (%)</label>
+                                <input id="profit-margin" name="ProfitMargin" value="<?php echo $current_margin; ?>" type="number" min="0" step="any" required class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Product Code</label>
+                                <input name="ProductCode" value="<?php echo isset($fetch_products_edit['ProductCode']) ? $fetch_products_edit['ProductCode'] : ''; ?>" type="text" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Unit</label>
+                                <input name="Unit" value="<?php echo isset($fetch_products_edit['Unit']) ? $fetch_products_edit['Unit'] : ''; ?>" type="text" class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select name="Status" class="form-control" style="width: 100%; height: 40px; border-radius: 5px; background: #eee; border:none; padding: 0 10px;">
+                                    <option value="1" <?php if($fetch_products_edit['Status'] == '1') echo 'selected'; ?>>
+                                        Show (On Sale)
+                                    </option>
+                                    <option value="0" <?php if($fetch_products_edit['Status'] == '0') echo 'selected'; ?>>
+                                        Hide (Not for Sale)
+                                    </option>
+                                </select>
                             </div>
                             <!-- Author -->
                             <div class="form-group">

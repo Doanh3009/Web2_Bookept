@@ -1,41 +1,75 @@
+/* --- GIAO DIỆN THẺ (CARDS) CHO USER & ORDER --- */
 .box {
-    background: white;
-    border-radius: 1rem;
-    box-shadow: 2px 2px 4px #888;
-    padding: 2rem;
-    display: grid;
-    justify-content: center;
-    font-size: 1.4em;
+    background: #fff;
+    border-radius: 20px; /* Bo góc hiện đại giống trang chủ */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Bóng đổ siêu mềm */
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Tạo khoảng cách đều giữa các dòng chữ */
+    font-size: 1.05em;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
+/* Hiệu ứng nhấc thẻ lên khi đưa chuột vào */
+.box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(67, 97, 238, 0.1); 
+}
+
+.box p {
+    line-height: 1.6;
+    color: var(--medium-gray);
+    margin: 0;
+}
+
+.box p span {
+    color: var(--dark-gray);
+    font-weight: 600;
+}
+
+/* --- GIAO DIỆN NÚT BẤM (BUTTONS) --- */
 .action {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+    border-top: 1px solid rgba(0,0,0,0.05);
+    padding-top: 15px;
 }
 
-.option-btn {
-    display: inline-block;
-    margin-top: 1rem;
-    padding: 1rem 3rem;
-    cursor: pointer;
-    color: var(--white);
-    font-size: 1.2em;
-    border-radius: 0.5rem;
-    text-transform: capitalize;
-}
-
+.option-btn, 
 .delete-btn {
     display: inline-block;
-    margin-top: 1rem;
-    padding: 1rem 3rem;
+    padding: 10px 20px;
     cursor: pointer;
-    color: var(--white);
-    font-size: 1.2em;
-    border-radius: 0.5rem;
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 10px; /* Bo góc nút bấm */
     text-transform: capitalize;
+    transition: all 0.3s ease;
+    text-align: center;
+    border: none;
+    flex: 1; /* Cho các nút dài bằng nhau */
 }
 
-.box p {
-    line-height: 2rem;
+.option-btn { 
+    background-color: var(--red); /* Dùng màu xanh chủ đạo mới */
+}
+
+.option-btn:hover { 
+    background-color: #2b45ba; 
+    box-shadow: 0 4px 12px rgba(67, 97, 238, 0.2); 
+}
+
+.delete-btn { 
+    background-color: #e63946; /* Giữ màu đỏ tươi cho nút Xóa/Hủy để cảnh báo */
+}
+
+.delete-btn:hover { 
+    background-color: #c1121f; 
+    box-shadow: 0 4px 12px rgba(230, 57, 70, 0.2); 
 }

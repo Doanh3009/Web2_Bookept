@@ -90,17 +90,11 @@ if (isset($_GET['unblock'])) {
 </head>
 
 <body>
-   <header class="header">
-      <button class="menu-icon-btn">
-         <div class="menu-icon">
-            <i class="fa-regular fa-bars"></i>
-         </div>
-      </button>
-   </header>
+   <?php include 'admin_header.php'; ?>
    <div class="container">
    <aside class="sidebar open">
             <div class="top-sidebar">
-                <a href="admin_main.php" class="channel-logo"><img src="image/homelogo.jpeg" alt="Channel Logo"></a>
+                <a href="admin_main.php" class="channel-logo"><img src="public/icon/logo.png" alt="Channel Logo"></a>
                 <div class="hidden-sidebar your-channel"><img src="" style="height: 30px;" alt="">
                 </div>
             </div>
@@ -116,6 +110,12 @@ if (isset($_GET['unblock'])) {
                         <a href="admin_products.php" class="sidebar-link">
                             <div class="sidebar-icon"><i class="fa fa-book"></i></div>
                             <div class="hidden-sidebar">Products</div>
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item tab-content">
+                        <a href="admin_imports.php" class="sidebar-link">
+                            <div class="sidebar-icon"><i class="fa fa-truck"></i></div>
+                            <div class="hidden-sidebar">Imports</div>
                         </a>
                     </li>
                     <li id="customers" class="sidebar-list-item tab-content active">

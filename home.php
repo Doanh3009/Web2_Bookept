@@ -139,7 +139,7 @@ if (isset($_POST['add_to_cart'])) {
             <p>Contact us for the best service support!</p>
          </div>
          <div>
-            <a href="https://www.facebook.com/ScytheTheKiller" class="option-btn">contact us</a>
+            <a href="https://www.facebook.com/kzie30" class="option-btn">contact us</a>
          </div>
       </div>
    </section>

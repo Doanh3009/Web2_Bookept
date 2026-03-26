@@ -8,7 +8,7 @@
    <title>Bookept | Login</title>
    <meta name="description" content="Knowledge space for nerds. Search online books by subject and add them to your favorite cart">
    <meta name="keywords" content="php, sql, mysql, html, css, javascript, book">
-   <link rel="shortcut icon" href="./public/favicon.ico" type="image/x-icon">
+   <link rel="shortcut icon" href="image/admin-panel.png" type="image/x-icon">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   
    <style>

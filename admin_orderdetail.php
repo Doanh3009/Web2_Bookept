@@ -1,293 +1,146 @@
 <?php
-header("Cache-Control: no-cache, no-store, must-revalidate"); // HTTP 1.1
-header("Pragma: no-cache"); // HTTP 1.0
-header("Expires: 0"); // Proxies
 include 'config.php';
-
 session_start();
-
 $admin_id = $_SESSION['admin_id'];
-
 
 if (!isset($admin_id)) {
     header('location:login_admin.php');
+    exit();
 }
-    // Lấy orderId từ yêu cầu POST
-    $orderId = $_GET['order_id'];
-    if(isset($_POST['payment'])){
-  
-    $sql = "UPDATE orders SET payment_status = 'Completed' WHERE id = '$orderId'";
-    mysqli_query($conn,$sql);
-    }
-    if(isset($_POST['cancel'])){
-    $sql = "UPDATE orders SET payment_status = 'Cancel' WHERE id = '$orderId'";
-    mysqli_query($conn,$sql);
-    }
 
+if (!isset($_GET['order_id'])) {
+    header('location:admin_orders.php');
+    exit();
+}
+
+$orderId = $_GET['order_id'];
+
+// UPDATE STATUS LOGIC
+if (isset($_POST['update_status'])) {
+    $new_status = $_POST['order_status'];
+    mysqli_query($conn, "UPDATE orders SET payment_status = '$new_status' WHERE id = '$orderId'") or die('Query failed');
+    echo "<script>alert('Order status updated to $new_status!');</script>";
+}
+
+// Fetch Order Info
+$sql_order = mysqli_query($conn, "SELECT * FROM orders WHERE id = '$orderId'");
+$result_order = mysqli_fetch_assoc($sql_order);
+
+if (!$result_order) {
+    echo "<script>alert('Order not found!'); window.location.href='admin_orders.php';</script>";
+    exit();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href='image/Logo.png' rel='icon' type='image/x-icon' />
     <link rel="stylesheet" href="styles/admin/admin.css">
     <link rel="stylesheet" href="styles/admin/admin-reponsive.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css" />
-
-
-    <link rel="stylesheet" href="">
-    <title>Quản lý cửa hàng</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <title>Order Detail #<?php echo $orderId; ?></title>
 </head>
 
 <body>
-    <header class="header">
-        <button class="menu-icon-btn">
-            <div class="menu-icon">
-                <i class="fa-regular fa-bars"></i>
-            </div>
-        </button>
-    </header>
+    <?php include 'admin_header.php'; ?>
     <div class="container">
-    <aside class="sidebar open">
-            <div class="top-sidebar">
-                <a href="admin_main.php" class="channel-logo"><img src="image/homelogo.jpeg" alt="Channel Logo"></a>
-                <div class="hidden-sidebar your-channel"><img src="" style="height: 30px;" alt="">
-                </div>
+        <aside class="sidebar open">
+             <div class="top-sidebar">
+                <a href="admin_main.php" class="channel-logo"><img src="public/icon/logo.png" alt="Channel Logo"></a>
             </div>
-            <div class="middle-sidebar">
-                <ul class="sidebar-list">
-                    <li id="main" class="sidebar-list-item tab-content">
-                        <a href="admin_main.php" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-home"></i></div>
-                            <div class="hidden-sidebar">Overview </div>
-                        </a>
-                    </li>
-                    <li class="sidebar-list-item tab-content">
-                        <a href="admin_products.php" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-book"></i></div>
-                            <div class="hidden-sidebar">Products</div>
-                        </a>
-                    </li>
-                    <li id="customers" class="sidebar-list-item tab-content">
-                        <a href="admin_users.php" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-group"></i></div>
-                            <div class="hidden-sidebar">Customer</div>
-                        </a>
-                    </li>
-                    <li class="sidebar-list-item tab-content">
-                        <a href="admin_orders.php" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-shopping-cart"></i></div>
-                            <div class="hidden-sidebar">Order</div>
-                        </a>
-                    </li>
-                    <li class="sidebar-list-item tab-content active">
-                        <a href="admin_stats.php" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-bar-chart"></i></div>
-                            <div class="hidden-sidebar">Statistical</div>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-            <div class="bottom-sidebar">
-                <ul class="sidebar-list">
-                    <li class="sidebar-list-item user-logout">
-                        <a href="#" class="sidebar-link">
-                            <div class="sidebar-icon"><i class="fa fa-arrow-right"></i></div>
-                            <div class="hidden-sidebar" onclick="redirectToLogout()">Log out</div>
-                            <script>
-                                function redirectToLogout() {
-                                    window.location.href = "logout_admin.php";
-                                }
-                            </script>
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </aside>
+            </aside>
+
         <main class="content">
-            <!-- Order  -->
             <div class="section active">
-                <div class="table">
-                    <table width="100%">
-                        <thead>
-                            <tr>
-                            <td>ID Orders</td>
-                            <td>Customer</td>
-                            <td>Order date</td>
-                            <td>Total price</td>
-                            <td>Status</td>
-                            <td>Action</td>
-                            </tr>
-                        </thead>
-                        <tbody id="showOrder">
-                            <?php
-                            $select_orders = mysqli_query($conn, "SELECT * FROM orders") or die('query failed');
-                            if (mysqli_num_rows($select_orders) > 0) {
-                                while ($fetch_orders = mysqli_fetch_assoc($select_orders)) {
-                            ?>
-                                    <tr>
-                                        <td value="<?php echo $fetch_orders['id'] ?>">DH-<?php echo $fetch_orders['id']; ?></td>
-                                        <td><?php echo $fetch_orders['name'] ?></td>
-                                        <td><?php echo $fetch_orders['placed_on'] ?></td>
-                                        <td><?php echo $fetch_orders['total_price'] ?>$</td>
-                                        <td><?php echo $fetch_orders['payment_status'] ?></td>
-                                        <td class="control">
-                                            <a style="color:black" href="admin_orderdetail.php?order_id= <?php echo $fetch_orders['id']; ?>"><i onclick="detailOrder()" class=" fa fa-asterisk"></i>Details</a>
-                                    <?php
-                                }
-                            }
-
-                                    ?>
-                                    <script>
-                                        function detailOrder() {
-                                            document.querySelector(".modal.detail-order").classList.add("open");
-                                        };
-                                    </script>
-                                        </td>
-                                    </tr>
-                        </tbody>
-                    </table>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h1 class="page-title">Order Details #<?php echo $orderId; ?></h1>
+                    <a href="admin_orders.php" class="option-btn" style="text-decoration: none;"><i class="fa fa-arrow-left"></i> Back to Orders</a>
                 </div>
-            </div>
-        </main>
-    </div>
-    </div>
-    <div class="modal detail-order open" id="a">
-        <div class="modal-container">
-            <h3 class="modal-container-title">Order Details</h3>
-            <form name="form" action="" method="post">
-                <input type="hidden" id="order_id_input" name="order_id">
-            </form>
-            <?php
-            // Lấy order_id từ tham số GET
-            $order_id = $_GET['order_id'];
 
-            // Truy vấn để lấy thông tin đơn hàng từ CSDL
-            $sql_order = mysqli_query($conn, "SELECT * FROM orders where id = '$order_id'");
-            $result_order = mysqli_fetch_assoc($sql_order);
-            
-
-            // Kiểm tra xem có đơn hàng nào được tìm thấy không
-            if ($result_order) {
-            ?>
-                <div class="modal-detail-order">
-                    <a href="admin_orders.php"><button class="modal-close"><i class="fa fa-close"></i></button></a>
-                    <div class="modal-detail-left">
-                        <div class="order-item-group">
+                <div class="box" style="display: flex; flex-wrap: wrap; gap: 20px;">
+                    <div style="flex: 1; min-width: 300px; border-right: 1px solid #eee; padding-right: 20px;">
+                        <h3 style="margin-bottom: 15px; color: var(--dark-gray); border-bottom: 2px solid #eee; padding-bottom: 10px;">Items Purchased</h3>
+                        <div style="max-height: 400px; overflow-y: auto; padding-right: 10px;">
                             <?php
-                            // Truy vấn để lấy thông tin chi tiết sản phẩm trong đơn hàng
-                            $total_products = $result_order['total_products']; // Lấy giá trị từ cột total_products
-                            $products_array = explode(',', $total_products); // Tách các sản phẩm thành mảng
-                            $product_number = 1;
-
-                            if (count($products_array) > 0) {
-                                array_shift($products_array); // Bỏ qua phần tử đầu tiên của mảng
+                            $total_products = $result_order['total_products']; 
+                            $products_array = explode(',', $total_products); 
+                            
+                            if (count($products_array) > 0 && empty(trim($products_array[0]))) {
+                                array_shift($products_array); 
                             }
 
                             foreach ($products_array as $product_string) {
-                                // Tách tên sản phẩm và số lượng
+                                if (trim($product_string) == '') continue;
+                                
                                 $product_data = explode('(', $product_string);
-                                $product_name = trim($product_data[0]); // Tên sản phẩm
-                                $product_quantity = intval($product_data[1]); // Số lượng sản phẩm
+                                $product_name = trim($product_data[0]); 
+                                $product_quantity = isset($product_data[1]) ? intval($product_data[1]) : 1; 
 
-                                // $sql_product_image = mysqli_query($conn,"SELECT Image FROM products  JOIN orders ON products.name =   $product_name ");
-
-                                // $product_img = mysqli_fetch_assoc($sql_product_image);    
-                                $sql_product_image = mysqli_query($conn, "SELECT * FROM products WHERE Name = '$product_name'");
-                                $product_img_data = mysqli_fetch_assoc($sql_product_image);
-                                $product_img_url = $product_img_data['Image'];
-
-                                // Truy vấn cơ sở dữ liệu để lấy thông tin về sản phẩm
-                                $sql_product = mysqli_query($conn, "SELECT * FROM products WHERE Name = '$product_name'");
+                                // Fetch product image and price
+                                $sql_product = mysqli_query($conn, "SELECT Image, Price FROM products WHERE Name = '$product_name'");
                                 $product_detail = mysqli_fetch_assoc($sql_product);
+                                
+                                $product_img = $product_detail ? $product_detail['Image'] : 'default.png';
+                                $product_price = $product_detail ? $product_detail['Price'] : 0;
+                                $line_total = $product_price * $product_quantity;
 
-                                // Tính toán tổng tiền cho sản phẩm
-                                $product_price = $product_detail['Price']; // Giá của sản phẩm
-                                $total_price = $product_price * $product_quantity; // Tổng tiền cho sản phẩm
-
-                                $product_number++;
-
-                                echo '<div class="order-product">';
-                                echo '<div class="order-product-left">';
-                                echo '<div class="order-product-left">';
-                                echo '<img src="image/' . $product_img_url . '" alt="">';
-
-
-                                echo '<div class="order-product-info">';
-                                echo '<h4>' . $product_name . '</h4> ';
-                                echo '<h4> Price: $' . $total_price . '</h4>';
-                                echo '<p class="order-product-quantity">SL: ' . $product_quantity . '<p>';
-                                echo '</div>';
-                                echo '</div>';
+                                echo '
+                                <div class="order-product" style="display: flex; gap: 15px; margin-bottom: 15px; padding: 10px; background: var(--lighter-gray); border-radius: 10px;">
+                                    <img src="image/' . $product_img . '" alt="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 8px;">
+                                    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center;">
+                                        <h4 style="margin-bottom: 5px; font-size: 1.1rem; color: var(--dark-gray);">' . $product_name . '</h4>
+                                        <p style="color: var(--medium-gray); font-size: 0.9rem;">Qty: <strong>' . $product_quantity . '</strong>  |  Unit Price: $' . $product_price . '</p>
+                                    </div>
+                                    <div style="display: flex; align-items: center; font-weight: bold; color: var(--red); font-size: 1.2rem;">
+                                        $' . $line_total . '
+                                    </div>
+                                </div>';
+                            }
                             ?>
                         </div>
                     </div>
-                <?php } ?>
+
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3 style="margin-bottom: 15px; color: var(--dark-gray); border-bottom: 2px solid #eee; padding-bottom: 10px;">Customer & Delivery Info</h3>
+                        <ul class="detail-order-group" style="padding: 0; list-style: none;">
+                            <li class="detail-order-item"><span class="detail-order-item-left"><i class="fa fa-calendar"></i> Date:</span> <strong><?php echo $result_order['placed_on']; ?></strong></li>
+                            <li class="detail-order-item"><span class="detail-order-item-left"><i class="fa fa-user"></i> Name:</span> <strong><?php echo $result_order['name']; ?></strong></li>
+                            <li class="detail-order-item"><span class="detail-order-item-left"><i class="fa fa-phone"></i> Phone:</span> <strong><?php echo $result_order['number']; ?></strong></li>
+                            <li class="detail-order-item"><span class="detail-order-item-left"><i class="fa fa-envelope"></i> Email:</span> <strong><?php echo $result_order['email']; ?></strong></li>
+                            <li class="detail-order-item"><span class="detail-order-item-left"><i class="fa fa-credit-card"></i> Method:</span> <strong style="text-transform: uppercase;"><?php echo $result_order['method']; ?></strong></li>
+                            <li class="detail-order-item tb" style="flex-direction: column; align-items: flex-start;">
+                                <span class="detail-order-item-t"><i class="fa fa-location-arrow"></i> Shipping Address:</span>
+                                <p class="detail-order-item-b" style="width: 100%; background: #f9f9f9; padding: 10px; border-radius: 5px; margin-top: 5px;"><?php echo $result_order['address']; ?></p>
+                            </li>
+                        </ul>
+
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 2px solid #eee;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                                <span style="font-size: 1.2rem; color: var(--medium-gray);">Grand Total:</span>
+                                <span style="font-size: 1.8rem; font-weight: bold; color: var(--red);">$<?php echo $result_order['total_price']; ?></span>
+                            </div>
+
+                            <form method="POST" action="" style="background: var(--lighter-gray); padding: 15px; border-radius: 10px;">
+                                <label style="display: block; margin-bottom: 10px; font-weight: bold; color: var(--dark-gray);">Update Order Status:</label>
+                                <div style="display: flex; gap: 10px;">
+                                    <select name="order_status" class="form-control" style="flex: 1;">
+                                        <option value="Pending" <?php if($result_order['payment_status'] == 'Pending') echo 'selected'; ?>>Pending</option>
+                                        <option value="Confirmed" <?php if($result_order['payment_status'] == 'Confirmed') echo 'selected'; ?>>Confirmed</option>
+                                        <option value="Delivered" <?php if($result_order['payment_status'] == 'Delivered') echo 'selected'; ?>>Delivered</option>
+                                        <option value="Cancelled" <?php if($result_order['payment_status'] == 'Cancelled') echo 'selected'; ?>>Cancelled</option>
+                                    </select>
+                                    <button type="submit" name="update_status" class="option-btn" style="margin: 0; padding: 0 20px;"><i class="fa fa-save"></i> Save</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
                 </div>
-        </div>
-        <div class="modal-detail-right">
-            <ul class="detail-order-group">
-                <li class="detail-order-item">
-                    <span class="detail-order-item-left"><i class="fa fa-calendar"></i> Order Date</span>
-                    <span class="detail-order-item-right"><?php echo $result_order['placed_on']; ?></span>
-                </li>
-                <li class="detail-order-item">
-                    <span class="detail-order-item-left"><i class="fa fa-user"></i> Customer</span>
-                    <span class="detail-order-item-right"><?php echo $result_order['name'] ?></span>
-                </li>
-                <li class="detail-order-item">
-                    <span class="detail-order-item-left"><i class="fa fa-phone"></i> Phone</span>
-                    <span class="detail-order-item-right"><?php echo $result_order['number'] ?></span>
-                </li>
-                <li class="detail-order-item">
-                    <span class="detail-order-item-left"><i class="fa fa-credit-card"></i> Method</span>
-                    <span class="detail-order-item-right"><?php echo $result_order['method'] ?></span>
-                </li>
-                <li class="detail-order-item tb">
-                    <span class="detail-order-item-t"><i class="fa fa-location-arrow"></i> Address</span>
-                    <p class="detail-order-item-b"><?php echo $result_order['address'] ?></p>
-                </li>
-            </ul>
-        </div>
-    </div>
-    <div class="modal-detail-bottom">
-        <div class="modal-detail-bottom-left">
-            <div class="price-total">
-                <span class="thanhtien">Total Price</span>
-                <span class="price">$<?php echo $result_order['total_price']; ?></span>
+
             </div>
-        </div>
-        <div class="modal-detail-bottom-right">
-            <form method="POST">
-            <!-- <button name="cancel" style="background-color: red;" class="btn-cancel modal-detail-btn" <?php if($result_order['payment_status'] == 'Completed'){
-                 echo 'style="cursor: not-allowed;';} ?>>Cancel</button> -->
-                <button name="cancel" class="btn-cancel modal-detail-btn" <?php if($result_order['payment_status'] == 'Completed' || $result_order['payment_status'] == "Cancel")
-                 echo 'style="cursor: not-allowed;"';?>>Cancel</button>
-                <?php
-                if ($result_order['payment_status'] == "pending") {
-                ?>
-            
-
-                    <button name="payment" class="btn-chuaxuly modal-detail-btn"><?php echo $result_order['payment_status'] ?></button>
-                </form>
-                <?php
-                } elseif($result_order['payment_status'] == "Completed") {
-                ?>
-                    
-                    <button style="cursor: not-allowed;" class="btn-daxuly modal-detail-btn"><?php echo $result_order['payment_status'] ?></button>
-                    </form>
-            <?php
-                }
-            }
-            ?>
-        </div>
+        </main>
     </div>
-
-    </div>
-    </div>
+    <script src="js/admin.js"></script>
 </body>
-
 </html>

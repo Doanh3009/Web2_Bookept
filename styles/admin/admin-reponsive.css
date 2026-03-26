@@ -1,50 +1,48 @@
-@media (max-width: 1220px)
-{
-    .cards .card-single{
-        min-width: 100px;
-    }
-    .cards .card-single .box h2{
-        font-size: 1.5rem;
+/* --- TỐI ƯU HIỂN THỊ CHO ĐIỆN THOẠI & TABLET --- */
+
+@media (max-width: 1220px) {
+    /* Màn hình laptop nhỏ / Tablet ngang */
+    .cards {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     }
 }
+
 @media (max-width: 900px) {
-    .cards{
-        display: flex;
-        flex-direction: column;
+    /* Tablet dọc */
+    .section {
+        padding: 1.5rem 1rem 0 1rem;
     }
-    .cards .card-single{
-        min-width: 500px;
-    }
-    .cards .card-single .box h2{
-        font-size: 3rem;
-    }
-    .cards .card-single .box p{
-        font-size: 1.3rem;
-    }
-    .cards .card-single .box h3{
-        font-size: 2.6rem;
-    }
-}
-@media (max-width: 800px)
-{
-    .cards{
-        display: flex;
-        flex-direction: column;
-    }
-    .cards .card-single{
-        min-width: 400px;
-    }
-    .cards .card-single .box h2{
-        font-size: 2.5rem;
-    }
-    .cards .card-single .box p{
-        font-size: 1rem;
-    }
-    .cards .card-single .box h3{
-        font-size: 2rem;
-    }
-}
-@media (max-width: 320px)
-{
     
+    .cards {
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 15px;
+    }
+
+    .cards .card-single {
+        padding: 20px;
+    }
+    
+    .cards .card-single h2 {
+        font-size: 2.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Điện thoại di động */
+    .cards {
+        grid-template-columns: 1fr; /* Ép về 1 cột */
+    }
+    
+    .products .box-container,
+    .show-products .box-container {
+        grid-template-columns: 1fr; /* Sản phẩm cũng về 1 cột */
+    }
+
+    .table {
+        padding: 10px; /* Thu gọn viền bảng biểu */
+    }
+    
+    .page-title {
+        font-size: 20px;
+    }
 }

@@ -39,11 +39,12 @@ if (isset($_GET['page'])) {
     $id = 1;
 }
 
+// Thay thế đoạn if(isset($_POST['add_product'])) cũ bằng đoạn này:
 if (isset($_POST['add_product'])) {
+    $code = $_POST['ProductCode']; // Mã mới thêm
     $name = $_POST['Name'];
-    $import_price = $_POST['ImportPrice']; // Lấy giá nhập từ form
-    $profit_margin = $_POST['ProfitMargin']; // Lấy % lợi nhuận từ form
-    // Logic tính giá bán
+    $import_price = $_POST['ImportPrice']; 
+    $profit_margin = $_POST['ProfitMargin']; 
     $price = $import_price * (1 + ($profit_margin / 100));
     $image = $_FILES['Image']['name'];
     $image_tmp_name = $_FILES['Image']['tmp_name'];
@@ -53,32 +54,39 @@ if (isset($_POST['add_product'])) {
     $language = $_POST['Language'];
     $cover =  $_POST['CoverType'];
     $quantity = $_POST['Quantity'];
+    $unit = $_POST['Unit']; // Đơn vị tính mới thêm
     $des = $_POST['Description'];
     $cate = $_POST['CategoryId'];
-    $select_product_name = mysqli_query($conn, "SELECT Name FROM products WHERE Name = '$name'") or die('query failed');
-    // Thêm ImportPrice vào câu lệnh INSERT
-    $add_product_query = mysqli_query($conn, "INSERT INTO products(CategoryId, Name, ImportPrice, Price, Image, MainAuthor, Publisher, PublicationYear, Language, CoverType, Quantity, Description, SoldYet, Status)
-         VALUES('$cate','$name', '$import_price', '$price', '$image', '$author', '$publisher', '$pub_year', '$language', '$cover', '$quantity', '$des', 'No', '1')") or die('query failed');
+    $status = $_POST['Status']; // Hiện trạng
+
+    // Cập nhật câu lệnh INSERT có ProductCode và Unit
+    $add_product_query = mysqli_query($conn, "INSERT INTO products(ProductCode, CategoryId, Name, ImportPrice, Price, Image, MainAuthor, Publisher, PublicationYear, Language, CoverType, Quantity, Unit, Description, SoldYet, Status)
+         VALUES('$code', '$cate', '$name', '$import_price', '$price', '$image', '$author', '$publisher', '$pub_year', '$language', '$cover', '$quantity', '$unit', '$des', 'No', '$status')") or die('query failed');
 
     if ($add_product_query) {
-        move_uploaded_file($_FILES["Image"]["tmp_name"], "image/" . $_FILES["Image"]["name"]);
-        $message[] = $cate;
-    } else {
-        $message[] = 'product could not be added!';
+        move_uploaded_file($image_tmp_name, "image/" . $image);
+        echo "<script>alert('Thêm sản phẩm thành công!');</script>";
     }
 }
 
-if (isset($_GET['delete'])) // kiểm tra xem có tồn tại tham số 'delete' trong mảng $_GET hay không nếu có gì có id
-{
-    $delete_id = $_GET['delete']; // nếu có thì lấy id 
-    $check_sold_query = mysqli_query($conn, "SELECT * FROM products WHERE '$delete_id' = Id");
-    $fetch_delete = mysqli_fetch_assoc($check_sold_query);
-    if ($fetch_delete['SoldYet'] == "Yes") {
-        mysqli_query($conn, "UPDATE products SET STATUS = 0 WHERE id = '$delete_id'");
+if (isset($_GET['delete'])) {
+    $delete_id = $_GET['delete']; 
+    
+    // Kiểm tra xem sản phẩm đã từng nhập hàng (Quantity > 0) hoặc đã bán (SoldYet = Yes) chưa
+    $check_product = mysqli_query($conn, "SELECT Quantity, SoldYet FROM products WHERE Id = '$delete_id'");
+    $fetch_check = mysqli_fetch_assoc($check_product);
+    
+    if ($fetch_check['Quantity'] > 0 || $fetch_check['SoldYet'] == "Yes") {
+        // Nếu đã nhập hàng hoặc đã bán -> Chỉ đánh dấu Ẩn (Status = 0)
+        mysqli_query($conn, "UPDATE products SET Status = 0 WHERE Id = '$delete_id'");
+        echo "<script>alert('The product has already been imported/sold. It has been set to HIDDEN instead of being permanently deleted.');</script>";
     } else {
-        mysqli_query($conn, "DELETE FROM products WHERE id = '$delete_id'") or die('query failed');
-        header("Location:admin_products.php");
+        // Chưa nhập hàng -> Xóa hẳn khỏi CSDL
+        mysqli_query($conn, "DELETE FROM products WHERE Id = '$delete_id'") or die('query failed');
+        echo "<script>alert('The product has been permanently deleted from the database.');</script>";
     }
+    echo "<script>window.location.href='admin_products.php';</script>";
+    exit();
 }
 
 if (isset($_GET['display'])) {
@@ -109,17 +117,11 @@ if (isset($_GET['display'])) {
 
 
 <body id="<?php echo $id ?>">
-    <header class="header">
-        <button class="menu-icon-btn">
-            <div class="menu-icon">
-                <i class="fa-regular fa-bars"></i>
-            </div>
-        </button>
-    </header>
+    <?php include 'admin_header.php'; ?>
     <div class="container">
         <aside class="sidebar open">
             <div class="top-sidebar">
-                <a href="admin_main.php" class="channel-logo"><img src="image/homelogo.jpeg" alt="Channel Logo"></a>
+                <a href="admin_main.php" class="channel-logo"><img src="public/icon/logo.png" alt="Channel Logo"></a>
                 <div class="hidden-sidebar your-channel"><img src="" style="height: 30px;" alt="">
                 </div>
             </div>
@@ -135,6 +137,12 @@ if (isset($_GET['display'])) {
                         <a href="admin_products.php" class="sidebar-link">
                             <div class="sidebar-icon"><i class="fa fa-book"></i></div>
                             <div class="hidden-sidebar">Products</div>
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item tab-content">
+                        <a href="admin_imports.php" class="sidebar-link">
+                            <div class="sidebar-icon"><i class="fa fa-truck"></i></div>
+                            <div class="hidden-sidebar">Imports</div>
                         </a>
                     </li>
                     <li id="customers" class="sidebar-list-item tab-content">
@@ -277,28 +285,31 @@ if (isset($_GET['display'])) {
 
             </div>
         </main>
-        <div class="modal add-product">
+       <div class="modal add-product">
             <div class="modal-container">
-                <h3 class="modal-container-title add-product-e">THÊM MỚI SẢN PHẨM</h3>
+                <h3 class="modal-container-title add-product-e">REGISTER NEW BOOK</h3>
+                    <p style="color: #e63946; font-size: 14px; font-weight: 500; margin: 0 20px 15px; background: #ffe3e3; padding: 10px; border-radius: 5px;">
+                        <i class="fa fa-exclamation-triangle"></i> Note: Use this form ONLY for completely new books. To restock existing books, please go to the <b>Imports</b> menu.
+                    </p>
                 <button class="modal-close product-form"><i class="fa fa-times"></i></button>
                 <div class="modal-content">
                     <form action="" method="POST" class="add-product-form" enctype="multipart/form-data">
                         <div class="modal-content-left">
                             <img id="imagePreview" src="./image/" alt="" class="upload-image-preview">
                             <div class="form-group file">
-                                <label for="up-hinh-anh" class="form-label-file"><i class="fa fa-plus"></i>Add Product</label>
-                                <input accept="image/jpeg, image/png, image/jpg" id="up-hinh-anh" name="Image" type="file" class="form-control" onchange="previewImage(event)">
+                                <label for="up-image" class="form-label-file"><i class="fa fa-plus"></i>Upload Image</label>
+                                <input accept="image/jpeg, image/png, image/jpg" id="up-image" name="Image" type="file" class="form-control" onchange="previewImage(event)">
                             </div>
                         </div>
                         <div class="modal-content-right">
                             <div class="form-group">
-                                <label for="ten-mon" class="form-label">Name</label>
-                                <input id="ten-mon" name="Name" type="text" placeholder="Please enter the name of the book  " value="" class="form-control">
+                                <label for="book-name" class="form-label">Book Name</label>
+                                <input id="book-name" name="Name" type="text" placeholder="Please enter the book name" value="" required class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
-                                <label for="category" class="form-label">Choose category</label>
-                                <select name="CategoryId" id="chon-mon">
+                                <label for="category" class="form-label">Category</label>
+                                <select name="CategoryId" id="category" class="form-control">
                                     <?php
                                     $sql_cate = "SELECT * FROM category";
                                     $result = mysqli_query($conn, $sql_cate);
@@ -306,64 +317,81 @@ if (isset($_GET['display'])) {
                                         while ($row = mysqli_fetch_assoc($result)) {
                                             echo '<option value="' . $row['CateId'] . '">' . $row['CateName'] . '</option>';
                                         }
-                                        echo '</select>';
                                     }
                                     ?>
-                                    <span class="form-message"></span>
+                                </select>
+                                <span class="form-message"></span>
                             </div>
-                            <!-- Price -->
+                            
                             <div class="form-group">
-                                <label for="gia-nhap" class="form-label">Import Price</label>
-                                <input id="gia-nhap" name="ImportPrice" type="number" min="0" placeholder="Please enter import price" required class="form-control">
+                                <label class="form-label">Product Code</label>
+                                <input name="ProductCode" type="text" placeholder="E.g: B001" required class="form-control">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Unit</label>
+                                <input name="Unit" type="text" placeholder="E.g: books, sets..." required class="form-control">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="import-price" class="form-label">Initial Import Price ($)</label>
+                                <input id="import-price" name="ImportPrice" type="number" min="0" step="any" placeholder="Initial cost per unit" required class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
-                                <label for="loi-nhuan" class="form-label">Profit Margin (%)</label>
-                                <input id="loi-nhuan" name="ProfitMargin" type="number" min="0" placeholder="E.g: 20 (for 20%)" required class="form-control">
+                                <label for="quantity" class="form-label">Initial Quantity (First time only)</label>
+                                <input id="quantity" name="Quantity" value="0" type="number" min="0" required class="form-control">
                                 <span class="form-message"></span>
                             </div>
-                            <!-- Author -->
+                            <div class="form-group">
+                                <label for="profit-margin" class="form-label">Profit Margin (%)</label>
+                                <input id="profit-margin" name="ProfitMargin" type="number" min="0" step="any" placeholder="E.g: 20 (for 20%)" required class="form-control">
+                                <span class="form-message"></span>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select name="Status" class="form-control">
+                                    <option value="1">Show (On Sale)</option>
+                                    <option value="0">Hide (Not for Sale)</option>
+                                </select>
+                            </div>
+                            
                             <div class="form-group">
                                 <label for="author" class="form-label">Author</label>
-                                <input id="author" name="MainAuthor" type="text" value="" class="form-control">
+                                <input id="author" name="MainAuthor" type="text" class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
                                 <label for="publisher" class="form-label">Publisher</label>
-                                <input id="publisher" name="Publisher" value="" type="text" class="form-control">
+                                <input id="publisher" name="Publisher" type="text" class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
-                                <label for="pub-year" class="form-label">PublicationYear</label>
-                                <input id="pub-year" name="PublicationYear" value="" type="number" min="0" class="form-control">
+                                <label for="pub-year" class="form-label">Publication Year</label>
+                                <input id="pub-year" name="PublicationYear" type="number" min="0" class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
                                 <label for="language" class="form-label">Language</label>
-                                <input id="language" name="Language" value="" type="text" class="form-control">
+                                <input id="language" name="Language" type="text" class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
-                                <label for="cover" class="form-label">Cover</label>
-                                <input id="cover" name="CoverType" value="" type="text" class="form-control">
+                                <label for="cover" class="form-label">Cover Type</label>
+                                <input id="cover" name="CoverType" type="text" class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">
-                                <label for="quanitiy" class="form-label">Quantity</label>
-                                <input id="quanitiy" name="Quantity" value="" type="number" min="0" class="form-control">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea class="product-desc" id="description" name="Description" placeholder="Enter book description..."></textarea>
                                 <span class="form-message"></span>
                             </div>
-                            <div class="form-group">
-                                <label for="mo-ta" class="form-label">Description</label>
-                                <textarea class="product-desc" id="mo-ta" value="" name="Description" placeholder="Nhập mô tả sách..."></textarea>
-                                <span class="form-message"></span>
-                            </div>
+                            
                             <button type="submit" class="form-submit btn-add-product-form add-product-e" id="add-product-button" name="add_product">
                                 <i class="fa fa-plus"></i>
-                                <span>ADD</span>
-
+                                <span>REGISTER BOOK</span>
                             </button>
-                            </a>
                         </div>
                     </form>
                 </div>

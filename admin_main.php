@@ -79,7 +79,7 @@ if (isset($_GET['unblock'])) {
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href='image/Logo.png' rel='icon' type='image/x-icon' />
+    <link href='image/admin-panel.png' rel='icon' type='image/x-icon' />
     <link rel="stylesheet" href="styles/admin/admin.css">
     <link rel="stylesheet" href="styles/admin/admin-reponsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" type="text/css" />
@@ -90,17 +90,11 @@ if (isset($_GET['unblock'])) {
 </head>
 
 <body>
-    <header class="header">
-        <button class="menu-icon-btn">
-            <div class="menu-icon">
-                <i class="fa-regular fa-bars"></i>
-            </div>
-        </button>
-    </header>
+    <?php include 'admin_header.php'; ?>
     <div class="container">
         <aside class="sidebar open">
             <div class="top-sidebar">
-                <a href="admin_main.php" class="channel-logo"><img src="image/homelogo.jpeg" alt="Channel Logo"></a>
+                <a href="admin_main.php" class="channel-logo"><img src="public/icon/logo.png" alt="Channel Logo"></a>
                 <div class="hidden-sidebar your-channel"><img src="" style="height: 30px;" alt="">
                 </div>
             </div>
@@ -116,6 +110,12 @@ if (isset($_GET['unblock'])) {
                         <a href="admin_products.php" class="sidebar-link">
                             <div class="sidebar-icon"><i class="fa fa-book"></i></div>
                             <div class="hidden-sidebar">Products</div>
+                        </a>
+                    </li>
+                    <li class="sidebar-list-item tab-content">
+                        <a href="admin_imports.php" class="sidebar-link">
+                            <div class="sidebar-icon"><i class="fa fa-truck"></i></div>
+                            <div class="hidden-sidebar">Imports</div>
                         </a>
                     </li>
                     <li id="customers" class="sidebar-list-item tab-content">
@@ -188,28 +188,25 @@ if (isset($_GET['unblock'])) {
                             </div>
                         </div>
                     </div>
-                    <div class="card-single">
+                   <div class="card-single">
                         <div class="box">
                             <?php
-                            $total_pendings = 0;
-                            $select_pending = mysqli_query($conn, "SELECT total_price FROM orders WHERE payment_status = 'pending'") or die('query failed');
-                            if (mysqli_num_rows($select_pending) > 0) {
-                                while ($fetch_pendings = mysqli_fetch_assoc($select_pending)) {
-                                    $total_price = $fetch_pendings['total_price'];
-                                    $total_pendings += $total_price;
+                            $total_revenue = 0;
+                            // Chỉ cộng dồn tiền của những đơn hàng có trạng thái là 'Delivered'
+                            $select_revenue = mysqli_query($conn, "SELECT total_price FROM orders WHERE payment_status = 'Delivered'") or die('Query failed');
+                            
+                            if (mysqli_num_rows($select_revenue) > 0) {
+                                while ($fetch_revenue = mysqli_fetch_assoc($select_revenue)) {
+                                    $total_revenue += (float)$fetch_revenue['total_price'];
                                 }
                             }
                             ?>
-                            <h2>$<?php echo $total_pendings; ?>/-</h2>
-                            <?php
-                            ?>
+                            <h2>$<?php echo number_format($total_revenue, 2); ?></h2>
+                            
                             <div class="on-box">
-                                <img src="" alt="" style=" width: 200px;">
+                                <img src="" alt="" style="width: 200px;">
                                 <h3>Revenue</h3>
                                 <p>The revenue of a business is the total amount of money it will receive from the consumption of products or the provision of services at a certain volume.</p>
-
-
-
                             </div>
                         </div>
                     </div>

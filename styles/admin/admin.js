@@ -972,6 +972,54 @@ function toast({
     main.appendChild(toast);
     }
 }
+// ==========================================
+// 6. CLIENT-SIDE FORM VALIDATION 
+// ==========================================
 
+const allForms = document.querySelectorAll('form');
+
+allForms.forEach(form => {
+    form.addEventListener('submit', function(event) {
+        let isValid = true;
+        let errorMessage = "";
+
+        // Lấy tất cả các ô input có thuộc tính "required" (Bắt buộc nhập)
+        const requiredInputs = form.querySelectorAll('input[required], textarea[required]');
+        
+        requiredInputs.forEach(input => {
+            // 1. Kiểm tra rỗng hoặc chỉ nhập toàn dấu cách (Whitespace)
+            if (input.value.trim() === "") {
+                isValid = false;
+                errorMessage = "Please fill in all required fields completely (cannot be empty or just spaces).";
+                input.style.border = "2px solid #e63946"; // Tô viền đỏ cảnh báo
+            } else {
+                input.style.border = "1px solid #ccc"; // Trả lại viền bình thường nếu đúng
+            }
+            
+            // 2. Kiểm tra các ô dạng số (Number) không được là số âm
+            if (input.type === "number") {
+                if (parseFloat(input.value) < 0) {
+                    isValid = false;
+                    errorMessage = "Number values (Price, Quantity, Margin...) cannot be negative.";
+                    input.style.border = "2px solid #e63946"; 
+                }
+            }
+        });
+
+        // Nếu có lỗi -> Ngăn chặn gửi form về Server và hiện thông báo
+        if (!isValid) {
+            event.preventDefault(); // Lệnh chặn gửi Request
+            alert("⚠️ VALIDATION ERROR:\n" + errorMessage);
+        }
+    });
+});
+
+// Reset viền đỏ khi người dùng bắt đầu gõ lại
+const allInputs = document.querySelectorAll('input, textarea');
+allInputs.forEach(input => {
+    input.addEventListener('input', function() {
+        this.style.border = "1px solid #ccc";
+    });
+});
 
 

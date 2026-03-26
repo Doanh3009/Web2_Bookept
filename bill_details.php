@@ -1,151 +1,156 @@
 <?php
 include 'config.php';
-
 session_start();
 
+if (!isset($_SESSION['user_id'])) {
+    header('location:login_customer.php');
+    exit();
+}
 $user_id = $_SESSION['user_id'];
 
-if (!isset($user_id)) {
-  header('location:login_customer.php');
-  exit();
+// Bắt buộc phải có order_id truyền vào url (ví dụ: bill_details.php?order_id=5)
+if (!isset($_GET['order_id'])) {
+    header('location:bill.php');
+    exit();
 }
+$order_id = $_GET['order_id'];
 
-if (isset($_POST["bill"]))
-{
-  header("location:bill.php");
-  exit();
+// Lấy thông tin đơn hàng cụ thể dựa trên order_id và phải là của user đang đăng nhập
+$sql_order = mysqli_query($conn, "SELECT * FROM `orders` WHERE id = '$order_id' AND user_id = '$user_id'");
+
+if (mysqli_num_rows($sql_order) == 0) {
+    echo "<script>alert('Order not found!'); window.location.href='bill.php';</script>";
+    exit();
 }
+$order_info = mysqli_fetch_assoc($sql_order);
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-   <meta charset="UTF-8">
-   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-   <meta name="description" content="Knowledge space for nerds. Search online books by subject and add them to your favorite cart">
-   <meta name="keywords" content="php, sql, mysql, html, css, javascript, book">
-   <link rel="shortcut icon" href="./public/favicon.ico" type="image/x-icon">
-   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-   <link rel="stylesheet" href="edit_customer.css">
-   <link rel="stylesheet" href="styles/main.css">
-
-   <style>
-    .box {
-        width: 450px;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Details #<?php echo $order_id; ?></title>
+    <link rel="shortcut icon" href="./public/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/main.css">
+    <style>
+        .details-container {
+            max-width: 800px;
+            margin: 20px auto;
+            background: #f9f9f9;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .info-group {
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+        .product-list {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: #fff;
+        }
+        .product-list th, .product-list td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+            font-size: 1.4rem;
+        }
+        .product-list th {
+            background-color: var(--light-bg);
+        }
+        .total-row {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--red);
+            text-align: right;
+            margin-top: 20px;
+        }
+        .btn-back {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: var(--purple);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body>
 
 <?php include 'header.php'; ?>
+
 <div class="heading">
-   <h3>BILL Details</h3>
-   <p> <a href="home.php">home</a></p>
+    <h3>ORDER DETAILS #<?php echo $order_id; ?></h3>
+    <p> <a href="bill.php">my orders</a> / details </p>
 </div>
-<?php
-if(isset($message) && is_array($message)) // Kiểm tra nếu $message là một mảng
-{
-    foreach($message as $msg)
-    {
-        echo '
-        <div class="message">
-        <span>' . $msg . '</span>
-        <i class="fas fa-times" onclick="this.parentElement.remove();"></i>
-        </div>'; // Thêm </div> ở cuối để đóng div.message
-    }
-}
-?>
-<div class="from_container">
-  <div class="container">
-    <br>
-    <form action="" method="POST" id="form">
-      <?php
-      $sql = mysqli_query($conn, "SELECT * FROM `users` WHERE id=$user_id");
-      $check = mysqli_fetch_assoc($sql); // lấy từng cột giá trị trên bảng users
-      $sql_bill = mysqli_query($conn, "SELECT * FROM `orders` WHERE user_id=$user_id ORDER BY id DESC LIMIT 1");
-      $order_info = mysqli_fetch_assoc($sql_bill);
-        
-      $sql_detailsbill = mysqli_query($conn, "SELECT * FROM `bill`  WHERE IdUser =$user_id ORDER BY IdBill DESC LIMIT 1 ");
-      $bill_info = mysqli_fetch_assoc($sql_detailsbill);
-      ?>
-      <table>
-    <?php
-    $total_products = $order_info['total_products']; // Lấy giá trị từ cột total_products
-    $products_array = explode(',', $total_products); // Tách các sản phẩm thành mảng
-    $product_number = 1;
 
-    if (count($products_array) > 0) {
-        array_shift($products_array); // Bỏ qua phần tử đầu tiên của mảng
-    }
+<div class="details-container">
+    <div class="info-group">
+        <p><strong>Customer Name:</strong> <?php echo $order_info['name']; ?></p>
+        <p><strong>Phone:</strong> <?php echo $order_info['number']; ?></p>
+        <p><strong>Shipping Address:</strong> <?php echo $order_info['address']; ?></p>
+        <p><strong>Payment Status:</strong> <span style="color: <?php echo ($order_info['payment_status'] == 'Completed') ? 'green' : 'red'; ?>"><?php echo $order_info['payment_status']; ?></span></p>
+    </div>
 
-    
+    <h3>Purchased Items</h3>
+    <table class="product-list">
+        <thead>
+            <tr>
+                <th>No.</th>
+                <th>Product Name</th>
+                <th>Qty</th>
+                <th>Subtotal</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php
+            // Thuật toán tách chuỗi "Tên sản phẩm (Số lượng)" của bạn
+            $total_products = $order_info['total_products']; 
+            $products_array = explode(',', $total_products); 
+            $product_number = 1;
 
-    foreach ($products_array as $product_string) {
-        // Tách tên sản phẩm và số lượng
-        $product_data = explode('(', $product_string);
-        $product_name = trim($product_data[0]); // Tên sản phẩm
-        $product_quantity = intval($product_data[1]); // Số lượng sản phẩm
+            if (count($products_array) > 0 && empty(trim($products_array[0]))) {
+                array_shift($products_array); 
+            }
 
-        // Truy vấn cơ sở dữ liệu để lấy thông tin về sản phẩm
-        $sql_product = mysqli_query($conn, "SELECT * FROM products WHERE name='$product_name'");
-        $product_detail = mysqli_fetch_assoc($sql_product);
+            foreach ($products_array as $product_string) {
+                if(trim($product_string) == '') continue;
 
-        // Tính toán tổng tiền cho sản phẩm
-        $product_price = $product_detail['Price']; // Giá của sản phẩm
-        $total_price = $product_price * $product_quantity; // Tổng tiền cho sản phẩm
+                $product_data = explode('(', $product_string);
+                $product_name = trim($product_data[0]); 
+                $product_quantity = isset($product_data[1]) ? intval($product_data[1]) : 1; 
 
-        // Hiển thị thông tin sản phẩm và tổng tiền
-        echo "<tr>";
-        echo "<td><label for='product_info'>Product ($product_number):</label></td>"; 
-        echo "<td><input type='text' value='$product_name (Amount: $product_quantity) - Total: $$total_price' class='box' readonly></td>";
-        echo "</tr>";
+                // Lấy đơn giá từ DB để tính toán hiển thị
+                $sql_product = mysqli_query($conn, "SELECT Price FROM products WHERE name='$product_name'");
+                $product_detail = mysqli_fetch_assoc($sql_product);
+                $product_price = $product_detail ? $product_detail['Price'] : 0;
+                $line_total = $product_price * $product_quantity;
 
-        $product_id_info[] = $product_detail['Id'];
-        $product_names_info[] = $product_name;
-        $product_quantities_info[] =  $product_quantity;
-        $product_prices_info[] = $total_price;
+                echo "<tr>";
+                echo "<td>" . $product_number . "</td>";
+                echo "<td><strong>" . $product_name . "</strong></td>";
+                echo "<td>" . $product_quantity . "</td>";
+                echo "<td>$" . $line_total . "</td>";
+                echo "</tr>";
 
-        $product_number++;
-    }
-    
-    $product_id_str = implode(', ', $product_id_info);
-    $product_names_str = implode(', ', $product_names_info);
-    $product_quantities_str = implode(', ', $product_quantities_info);
-    $product_prices_str = implode(', ', $product_prices_info);
+                $product_number++;
+            }
+            ?>
+        </tbody>
+    </table>
 
-    // Chèn dữ liệu vào bảng detailsbill
-    $sql_check_detailsbill = "SELECT * FROM detailsbill 
-    WHERE IdBill = '{$bill_info['IdBill']}'";
+    <div class="total-row">
+        Grand Total: $<?php echo $order_info['total_price']; ?>
+    </div>
 
-    $result_check_detailsbill = mysqli_query($conn, $sql_check_detailsbill);
-
-    if (mysqli_num_rows($result_check_detailsbill) == 0) {
-        $sql_insert_details = "INSERT  INTO detailsbill (IdBill, IdProduct, ProductName, ProductAmount, TotalMoneyEachProduct) 
-                    VALUES ('{$bill_info['IdBill']}', '$product_id_str', '$product_names_str', '$product_quantities_str', '$product_prices_str')";
-
-        if (mysqli_query($conn, $sql_insert_details)) {
-            echo '<span style="color: white;">Details inserted successfully.</span>';
-        } else {
-            echo "Error inserting details: " . mysqli_error($conn);
-        }
-    } else {
-        echo '<span style="color: white;">Details already existed.</span>';
-    }
-
-    echo "<tr>";
-    echo "<td><label>Total Price:</label></td>";
-    echo "<td><input type='text' value='$" . $order_info['total_price'] . "' class='box' readonly></td>";
-    echo "</tr>";
-
-    ?>
-</table>
-
-      <div class="button_form">
-        <input type="button" onclick="window.location.href = 'home.php';" value="Return">
-        <input type="submit" name="bill" onclick="window.location.href = 'bill.php';" value="View Bill">
-      </div>
-    </form>
-  </div>
+    <a href="bill.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back to History</a>
 </div>
+
 </body>
+</html>

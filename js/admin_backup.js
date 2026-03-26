@@ -2,27 +2,13 @@
 // ADMIN DASHBOARD - UI/UX CONTROLLER
 // ==========================================
 
-// 1. Sidebar Toggle Logic với chức năng GHI NHỚ trạng thái
+// 1. Sidebar Toggle Logic
 const menuIconButton = document.querySelector(".menu-icon-btn");
 const sidebar = document.querySelector(".sidebar");
 
 if (menuIconButton && sidebar) {
-    // Đọc trạng thái từ localStorage
-    // Mặc định là 'collapsed' nếu chưa có giá trị (lần đầu vào trang)
-    const sidebarState = localStorage.getItem('sidebar-state') ?? 'collapsed';
-
-    if (sidebarState === 'expanded') {
-        sidebar.classList.add("open");
-    } else {
-        sidebar.classList.remove("open");
-    }
-
     menuIconButton.addEventListener("click", () => {
         sidebar.classList.toggle("open");
-
-        // Lưu trạng thái mới vào localStorage
-        const isOpen = sidebar.classList.contains("open");
-        localStorage.setItem('sidebar-state', isOpen ? 'expanded' : 'collapsed');
     });
 }
 
@@ -31,7 +17,8 @@ const closeModalBtns = document.querySelectorAll('.modal-close');
 
 closeModalBtns.forEach(btn => {
     btn.addEventListener('click', function(e) {
-        e.preventDefault();
+        // Prevent default form submission if it's a button inside a form
+        e.preventDefault(); 
         const modal = this.closest('.modal');
         if (modal) {
             modal.classList.remove('open');
@@ -58,11 +45,11 @@ function previewImage(event) {
 function setDefaultValue() {
     const preview = document.querySelector(".upload-image-preview");
     if (preview) preview.src = "./image/";
-
+    
     const nameInput = document.getElementById("book-name");
     const priceInput = document.getElementById("import-price");
     const descInput = document.getElementById("description");
-
+    
     if (nameInput) nameInput.value = "";
     if (priceInput) priceInput.value = "";
     if (descInput) descInput.value = "";

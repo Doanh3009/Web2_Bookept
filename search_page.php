@@ -102,7 +102,7 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
    </div>
 
    <section class="search-form">
-      <form action="" method="post">
+      <form action="" method="get">
          <?php
 
          // Thực hiện truy vấn SQL để lấy dữ liệu từ cột 'CateName'
@@ -206,138 +206,106 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
       <div class="box-container">
          <?php
          $limit = 4;
-         $getquery = "SELECT * FROM products";
-         $result = mysqli_query($conn, $getquery);
-         $total_rows = mysqli_num_rows($result);
-         $total_pages = ceil($total_rows / $limit);
-         if (!isset($_GET['page'])) {
-            $page_number = 1;
-         } else {
-            $page_number = $_GET['page'];
-         }
+         $page_number = isset($_GET['page']) ? (int)$_GET['page'] : 1;
          $initial_page = ($page_number - 1) * $limit;
-         if (!isset($_POST['submit'])) {
 
-            $getquery = "SELECT * FROM products LIMIT $initial_page, $limit";
-            $result = mysqli_query($conn, $getquery);
-            if (mysqli_num_rows($result) > 0) {
-               while ($fetch_product = mysqli_fetch_assoc($result)) {
-         ?>
-                  <form action="" method="post" class="box" style="padding-left: 20px;">
-                     <a href="products_details.php?product_id=<?php echo $fetch_product['Id']; ?>">
-                        <img src="image/<?php echo $fetch_product['Image']; ?>" alt="" class="image" style="align: center;">
-                     </a>
-                     <div class="name" style="font-size: 15px;"><?php echo $fetch_product['Name']; ?></div>
-                     <div class="price" style="font-size: 15px;">$<?php echo $fetch_product['Price']; ?>/-</div>
-                     <input type="number" class="qty" name="product_quantity" min="1" value="1">
-                     <input type="hidden" name="product_name" value="<?php echo $fetch_product['Name']; ?>">
-                     <input type="hidden" name="product_price" value="<?php echo $fetch_product['Price']; ?>">
-                     <input type="hidden" name="product_image" value="<?php echo $fetch_product['Image']; ?>">
-                     <input type="submit" class="btn" value="add to cart" name="add_to_cart">
-                  </form>
-                  <?php
-               }
-               ?>
-               </div>
-               <div class="page-nav">
-                     <ul class="page-nav-list">
-               <?php
-               for ($page_number = 1; $page_number <= $total_pages; $page_number++) {
-                  echo '<li class="page-nav-item"><a href="search_page.php?page=' . $page_number . '">' . $page_number . '</a></li>';
-                     // Kiểm tra xem có từ khóa tìm kiếm hay không
-               }
-               echo '</ul> </div>';
-            }
-         } else {
-            if (isset($_POST['submit'])) {
-               $sql = "SELECT * FROM products where 1=1 ";
+         // 1. TẠO CÂU TRUY VẤN GỐC
+         $sql = "SELECT * FROM products WHERE 1=1 ";
 
-               if (!empty($_POST['category_name'])) {
-                  $category_name = mysqli_real_escape_string($conn, $_POST['category_name']);
-
-                  $sql_category_id = "SELECT CateId FROM category WHERE CateName = '$category_name'";
-                  $result_category_id = mysqli_query($conn, $sql_category_id);
-
-                  if (mysqli_num_rows($result_category_id) > 0) {
-                     $row_category_id = mysqli_fetch_assoc($result_category_id);
-                     $category_id = $row_category_id['CateId'];
-                     $sql .= "AND CategoryId = '$category_id'";
-                  }
-               }
-               if (!empty($_POST['author'])) {
-                  $author = mysqli_real_escape_string($conn, $_POST['author']);
-                  $sql .= " AND MainAuthor = '$author'";
-               }
-               if (!empty($_POST['publisher'])) {
-                  $publisher = mysqli_real_escape_string($conn, $_POST['publisher']);
-                  $sql .= " AND Publisher = '$publisher'";
-               }
-
-               if (!empty($_POST['year'])) {
-                  $year = mysqli_real_escape_string($conn, $_POST['year']);         
-
-                  if ($year == '1800-1900') {
-                      $sql .= "AND `PublicationYear` BETWEEN 1800 AND 1900";
-                  } elseif ($year == '1900-2000') {
-                      $sql .= "AND `PublicationYear` BETWEEN 1900 AND 2000";
-                  } else {
-                      $sql .= "AND `PublicationYear` > 2000";
-                  }
-
-               }
-               if (!empty($_POST['language'])) {
-                  $language = mysqli_real_escape_string($conn, $_POST['language']);
-                  $sql .= " AND Language = '$language'";
-               }
-               if (!empty($_POST['cover'])) {
-                  $cover = mysqli_real_escape_string($conn, $_POST['cover']);
-                  $sql .= " AND CoverType = '$cover'";
-               }
-               // Kiểm tra xem giá trị đã nhập vào có hợp lệ không
-               $min_price = $_POST['min_price'];
-               $max_price = $_POST['max_price'];
-               // Kiểm tra xem có giá trị hợp lệ không
-               if (!empty($min_price) && !empty($max_price)) {
-                  // Chuyển đổi giá trị thành số nguyên để tránh lỗ hổng bảo mật SQL Injection
-                  $min_price = intval($min_price);
-                  $max_price = intval($max_price);
-                  // Tạo câu truy vấn SQL để lấy các sản phẩm trong khoảng giá trị min và max
-                  $sql .= "AND Price > $min_price AND Price < $max_price";
-               }
-               if (!empty($_POST['search'])) {
-                  $search_item = mysqli_real_escape_string($conn, $_POST['search']);
-                  $sql .= "AND name LIKE '%$search_item%'";
-               }
-               if (!isset($_GET['page'])) {
-                  $page_number = 1;
-               } else {
-                  $page_number = $_GET['page'];
-               }
-               $result = mysqli_query($conn, $sql) or die("query failed");
-               if (mysqli_num_rows($result) > 0) {
-                  while ($fetch_product = mysqli_fetch_assoc($result)) {
-                  ?>
-                     <form action="" method="post" class="box" style="padding-left: 20px;">
-                        <a href="products_details.php?product_id=<?php echo $fetch_product['Id']; ?>">
-                           <img src="image/<?php echo $fetch_product['Image']; ?>" alt="" class="image" style="align: center;">
-                        </a>
-                        <div class="name" style="font-size: 15px;"><?php echo $fetch_product['Name']; ?></div>
-                        <div class="price" style="font-size: 15px;">$<?php echo $fetch_product['Price']; ?>/-</div>
-                        <input type="number" class="qty" name="product_quantity" min="1" value="1">
-                        <input type="hidden" name="product_name" value="<?php echo $fetch_product['Name']; ?>">
-                        <input type="hidden" name="product_price" value="<?php echo $fetch_product['Price']; ?>">
-                        <input type="hidden" name="product_image" value="<?php echo $fetch_product['Image']; ?>">
-                        <input type="submit" class="btn" value="add to cart" name="add_to_cart">
-                     </form>
-
-         <?php
-                  }
-               }
+         // 2. NỐI THÊM BỘ LỌC NẾU CÓ TÌM KIẾM (Đã chuyển từ $_POST sang $_GET)
+         if (isset($_GET['category_name']) && !empty($_GET['category_name'])) {
+            $category_name = mysqli_real_escape_string($conn, $_GET['category_name']);
+            // Tối ưu bằng IN Subquery thay vì phải query riêng
+            $sql .= " AND CategoryId IN (SELECT CateId FROM category WHERE CateName = '$category_name') ";
+         }
+         if (isset($_GET['author']) && !empty($_GET['author'])) {
+            $author = mysqli_real_escape_string($conn, $_GET['author']);
+            $sql .= " AND MainAuthor = '$author'";
+         }
+         if (isset($_GET['publisher']) && !empty($_GET['publisher'])) {
+            $publisher = mysqli_real_escape_string($conn, $_GET['publisher']);
+            $sql .= " AND Publisher = '$publisher'";
+         }
+         if (isset($_GET['year']) && !empty($_GET['year'])) {
+            $year = mysqli_real_escape_string($conn, $_GET['year']);         
+            if ($year == '1800-1900') {
+                $sql .= " AND PublicationYear BETWEEN 1800 AND 1900";
+            } elseif ($year == '1900-2000') {
+                $sql .= " AND PublicationYear BETWEEN 1900 AND 2000";
+            } else {
+                $sql .= " AND PublicationYear > 2000";
             }
          }
+         if (isset($_GET['language']) && !empty($_GET['language'])) {
+            $language = mysqli_real_escape_string($conn, $_GET['language']);
+            $sql .= " AND Language = '$language'";
+         }
+         if (isset($_GET['cover']) && !empty($_GET['cover'])) {
+            $cover = mysqli_real_escape_string($conn, $_GET['cover']);
+            $sql .= " AND CoverType = '$cover'";
+         }
+         if (!empty($_GET['min_price']) && !empty($_GET['max_price'])) {
+            $min_price = intval($_GET['min_price']);
+            $max_price = intval($_GET['max_price']);
+            $sql .= " AND Price >= $min_price AND Price <= $max_price";
+         }
+         if (isset($_GET['search']) && !empty($_GET['search'])) {
+            $search_item = mysqli_real_escape_string($conn, $_GET['search']);
+            $sql .= " AND Name LIKE '%$search_item%'";
+         }
+
+         // 3. ĐẾM TỔNG SỐ SẢN PHẨM TÌM ĐƯỢC (ĐỂ PHÂN TRANG)
+         $result_count = mysqli_query($conn, $sql);
+         $total_rows = mysqli_num_rows($result_count);
+         $total_pages = ceil($total_rows / $limit);
+
+         // 4. NỐI LỆNH LIMIT VÀO ĐỂ LẤY SẢN PHẨM TRANG HIỆN TẠI
+         $sql .= " LIMIT $initial_page, $limit";
+         $result = mysqli_query($conn, $sql) or die("Query failed!");
+
+         // 5. IN RA SẢN PHẨM
+         if (mysqli_num_rows($result) > 0) {
+            while ($fetch_product = mysqli_fetch_assoc($result)) {
          ?>
-
-
+               <form action="" method="post" class="box" style="padding-left: 20px;">
+                  <a href="products_details.php?product_id=<?php echo $fetch_product['Id']; ?>">
+                     <img src="image/<?php echo $fetch_product['Image']; ?>" alt="" class="image" style="align: center;">
+                  </a>
+                  <div class="name" style="font-size: 15px;"><?php echo $fetch_product['Name']; ?></div>
+                  <div class="price" style="font-size: 15px;">$<?php echo $fetch_product['Price']; ?>/-</div>
+                  <input type="number" class="qty" name="product_quantity" min="1" value="1">
+                  <input type="hidden" name="product_name" value="<?php echo $fetch_product['Name']; ?>">
+                  <input type="hidden" name="product_price" value="<?php echo $fetch_product['Price']; ?>">
+                  <input type="hidden" name="product_image" value="<?php echo $fetch_product['Image']; ?>">
+                  <input type="submit" class="btn" value="add to cart" name="add_to_cart">
+               </form>
+         <?php
+            }
+         } else {
+             // Báo lỗi nếu không có sản phẩm nào
+             echo '<p class="empty" style="font-size: 20px; width: 100%; text-align: center; color: red;">No products found matching your search!</p>';
+         }
+         ?>
+      </div>
+      
+      <?php if ($total_pages > 1) { ?>
+      <div class="page-nav">
+         <ul class="page-nav-list">
+            <?php
+            for ($i = 1; $i <= $total_pages; $i++) {
+               // Quan trọng: Hàm này giúp "Nhớ" các từ khóa tìm kiếm trên URL để khi qua Trang 2 không bị mất
+               $query_params = $_GET;
+               $query_params['page'] = $i;
+               $url = 'search_page.php?' . http_build_query($query_params);
+               
+               // Đổi màu đỏ cho trang hiện hành (như trong CSS bạn cài đặt)
+               $active_style = ($i == $page_number) ? 'style="background-color: #ff0000; color: #fff;"' : '';
+               echo '<li class="page-nav-item"><a href="' . $url . '" ' . $active_style . '>' . $i . '</a></li>';
+            }
+            ?>
+         </ul> 
+      </div>
+      <?php } ?>
    </section>
    
    <?php include 'footer.php'; ?>

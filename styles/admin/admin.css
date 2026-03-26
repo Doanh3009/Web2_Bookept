@@ -13,12 +13,12 @@
     text-decoration: none;
 }
 :root {
-    --red: #b5292f;
-    --lightest-gray: rgb(249, 249, 249);
-    --lighter-gray: rgb(240, 240, 240);
-    --light-gray: rgb(144, 144, 144);
-    --medium-gray: rgb(96, 96, 96);
-    --dark-gray: rgb(13, 13, 13);
+    --red: #4361ee; 
+    --lightest-gray: #f8f9fa;
+    --lighter-gray: #f4f7fe; /* Màu nền xám nhạt sang trọng */
+    --light-gray: #a3aed1;
+    --medium-gray: #8f9bba;
+    --dark-gray: #2b3674; /* Màu chữ chính (xanh đen) */
     --header-height: 60px;
     --animation-duration: 200ms;
     --animation-timing-curve: ease-in-out;
@@ -31,6 +31,9 @@ html {
 body::-webkit-scrollbar {
     width: 3px;
     /* height:50px; */
+}
+body, .content {
+    background-color: var(--lighter-gray) !important;
 }
 
 body::-webkit-scrollbar-track {
@@ -289,7 +292,7 @@ body,input,button,textarea,pre {
     flex-direction: column;
     height: 100vh;
     /* height: calc(100vh - var(--header-height)); */
-    padding-top: 5rem;
+    padding-top: 2.5rem;  
     align-items: center;
     justify-content: stretch;
     transition: width var(--animation-duration) var(--animation-timing-curve);
@@ -327,20 +330,21 @@ body,input,button,textarea,pre {
 }
 
 .sidebar.open .channel-logo {
-    width: 100px;
-    height: 100px;
+    width: 140px !important; 
+    height: auto !important;
+    margin: 0 auto !important; /* Canh giữa logo */
 }
 
-.sidebar .channel-logo>img {
-    width: 100%;
-    height: 100%;
+.sidebar .channel-logo > img {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
 }
-
+.sidebar .your-channel {
+    display: none !important; 
+}
 .middle-sidebar {
-    overflow-y: auto;
-    overflow-x: hidden;
-    flex-grow: 1;
-    margin: 1rem 0;
+    margin-top: 10px !important; /* Gốc là 1rem, giảm xuống để menu nhích lên gần logo */
 }
 
 .middle-sidebar,
@@ -438,7 +442,8 @@ body,input,button,textarea,pre {
 }
 
 .sidebar.open .top-sidebar {
-    height: 125px;
+    height: auto; /* Đổi từ 125px thành auto để khung tự động ôm sát logo */
+    padding-bottom: 15px; /* Thêm một chút khoảng cách phía dưới cho thoáng mắt */
 }
 
 .sidebar .top-sidebar .hidden-sidebar {
@@ -465,7 +470,7 @@ body,input,button,textarea,pre {
 .section {
     padding: 2rem 2rem 0 1.5rem;
     display: none;
-    background-color: #fff;
+    background-color: transparent !important;
     position: relative;
 }
 
@@ -473,80 +478,64 @@ body,input,button,textarea,pre {
     display: block;
 }
 
+/* --- GIAO DIỆN CARDS HIỆN ĐẠI --- */
 .cards {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px; /* Khoảng cách thoáng đãng */
+    margin-top: 20px;
 }
 
 .cards .card-single {
     background: #fff;
-    height: 500px;
-    width: 31%;
-    /* max-width: 500px;*/
-    min-width: 290px;
-    position: relative;
-    box-shadow: inset 5px 5px 5px rgba(0, 0, 0, 0.05),
-        inset -5px -5px 5px rgba(255, 255, 255, 0.5),
-        5px 5px 5px rgba(0, 0, 0, 0.05), -5px -5px 5px rgba(255, 255, 255, 0.5);
-    border-radius: 15px;
-    margin: 12px;
+    border-radius: 20px; /* Bo góc mượt mà */
+    padding: 30px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Đổ bóng nổi siêu mềm */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
 }
 
-.cards .card-single .box {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    bottom: 20px;
-    background-color: rgb(255, 255, 255);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    border-radius: 15px;
-    align-items: center;
-    transition: 0.5s;
-    padding: 20px;
-    text-align: center;
+/* Hiệu ứng nhấc thẻ lên nhẹ nhàng khi đưa chuột vào */
+.cards .card-single:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(67, 97, 238, 0.1); /* Bóng ngả viền xanh nhẹ */
 }
 
-.cards .card-single:hover .box {
-    transform: translateY(-10px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(45deg, var(--red), orange);
-}
-
+/* Ẩn các box rườm rà bên trong */
+.cards .card-single .box,
 .cards .card-single .box .on-box {
-    margin-top: 2rem;
-}
-
-.cards .card-single .box h2 {
-    position: absolute;
-    top: 5px;
-    right: 30px;
-    font-size: 2rem;
-    color: var(--dark-gray);
-    transition: 0.3s;
-    pointer-events: none;
-}
-
-.cards .card-single .box h3 {
-    font-size: 1.5rem;
-    color: var(--dark-gray);
-    z-index: 1;
-    transition: 0.3s;
-    margin-bottom: 10px;
-}
-
-.cards .card-single .box p {
-    font-size: 0.9em;
-    font-weight: 400;
-    color: var(--dark-gray);
-    z-index: 1;
-    transition: 0.3s;
+    position: relative;
+    background: transparent;
+    box-shadow: none;
+    padding: 0;
+    margin: 0;
     text-align: left;
 }
 
-.cards .card-single .box:hover h2,
-.cards .card-single .box:hover h3,
-.cards .card-single .box:hover p {
-    color: #fff;
+/* Định dạng lại Text bên trong */
+.cards .card-single h3 {
+    font-size: 1.1rem;
+    color: var(--light-gray);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.cards .card-single h2 {
+    font-size: 2.8rem;
+    color: var(--dark-gray);
+    margin-bottom: 15px;
+    font-weight: 800;
+}
+
+.cards .card-single p {
+    font-size: 0.95rem;
+    color: var(--medium-gray);
+    line-height: 1.6;
+    margin-top: auto; /* Đẩy text xuống dưới cùng nếu thẻ dài ngắn khác nhau */
 }
 
 /* customer */
@@ -756,7 +745,9 @@ tbody tr td {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.3s ease;
-    z-index: 10;
+    
+    /* Đổi từ 10 thành 9999 để nó luôn nằm trên cùng mọi thứ */
+    z-index: 9999; 
 }
 
 .modal.open {
@@ -1377,4 +1368,51 @@ label a {
 }
 .hidden-sidebar {
     display: inline-block;
+}
+/* --- NÂNG CẤP BẢNG BIỂU (TABLES) --- */
+.table {
+    width: 100%;
+    overflow-x: auto;
+    background: #fff;
+    border-radius: 20px !important; /* Bo góc mượt */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+    border: 1px solid rgba(0,0,0,0.02) !important;
+    padding: 20px;
+}
+
+thead td {
+    font-size: 0.9rem !important;
+    text-transform: uppercase;
+    font-weight: 700 !important;
+    background: var(--lighter-gray) !important;
+    color: var(--medium-gray) !important;
+    padding: 15px !important;
+    border-bottom: 2px solid rgba(0,0,0,0.05) !important;
+}
+
+tbody tr {
+    border-bottom: 1px solid rgba(0,0,0,0.03) !important;
+    transition: background-color 0.3s ease;
+}
+
+tbody tr:hover {
+    background-color: var(--lighter-gray) !important; /* Đổi màu nhẹ khi rê chuột vào hàng */
+}
+
+tbody tr td {
+    padding: 15px !important;
+    color: var(--dark-gray);
+}
+
+/* --- NÂNG CẤP MODAL (CỬA SỔ BẬT LÊN) --- */
+.modal-container {
+    border-radius: 20px !important;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.15) !important;
+    border: none !important;
+}
+
+.modal-container-title {
+    font-size: 1.5rem;
+    color: var(--dark-gray);
+    font-weight: 700;
 }

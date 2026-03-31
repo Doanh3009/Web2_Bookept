@@ -81,8 +81,8 @@ if (isset($_POST['add_to_cart'])) {
                 // Lấy ID sản phẩm từ URL
                 $product_id = $_GET['product_id'];
 
-                // Truy vấn CSDL để lấy thông tin chi tiết của sản phẩm dựa trên ID
-                $sql = "SELECT * FROM products WHERE Id = $product_id";
+                // Truy vấn CSDL kết hợp bảng products và category để lấy tên Thể loại
+                $sql = "SELECT p.*, c.CateName FROM products p LEFT JOIN category c ON p.CategoryId = c.CateId WHERE p.Id = $product_id";
                 $result = mysqli_query($conn, $sql);
 
                 // Kiểm tra xem có sản phẩm nào tương ứng không
@@ -104,6 +104,7 @@ if (isset($_POST['add_to_cart'])) {
                             <div class="info">
                                 <div class="label">
                                     <p style="font-size: 15px; color:black"> Publisher: <b><?php echo $product['Publisher']; ?></b> </p>
+                                    <p style="font-size: 15px; color:black"> Type: <b><?php echo $product['CateName']; ?></b> </p>
                                     <div class="label">
                                         <p style="font-size: 15px; color:black">Author: <b><?php echo $product['MainAuthor']; ?> </b></p>
                                     </div>

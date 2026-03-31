@@ -88,7 +88,17 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
     color: #fff; /* Màu chữ màu trắng */
 }
 
-
+/* --- HIỆU ỨNG KHI RÀ CHUỘT VÀO TÊN THỂ LOẠI --- */
+      .hover-cate {
+         font-weight: normal !important; 
+         transition: all 0.1s ease-in-out;
+      }
+      
+      .hover-cate:hover {
+         font-weight: bold !important; 
+         text-decoration: underline !important; 
+         color: #8e44ad !important; 
+      }
    </style>
 </head>
 
@@ -102,103 +112,29 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
    </div>
 
    <section class="search-form">
-      <form action="" method="get">
+      <form action="" method="get" style="display: flex; gap: 10px; justify-content: center; align-items: center; max-width: 800px; margin: 0 auto;">
          <?php
-
-         // Thực hiện truy vấn SQL để lấy dữ liệu từ cột 'CateName'
-         $sql_category = "SELECT CateName FROM category"; // Thay 'table_name' bằng tên bảng thực tế của bạn
+         // Chỉ truy vấn và hiển thị phân loại Type (Category)
+         $sql_category = "SELECT CateName FROM category";
          $result_category = mysqli_query($conn, $sql_category);
 
-         // Kiểm tra xem có kết quả trả về không
          if (mysqli_num_rows($result_category) > 0) {
-            // Bắt đầu select box
-            echo "<select name='category_name' id='category_name'>";
-            echo "<option value='' selected disabled >Type</option>"; // Option mặc định
+            // Thay đổi style để select box đồng bộ với ô tìm kiếm
+            echo "<select name='category_name' id='category_name' class='box' style='width: 250px; margin: 0; cursor: pointer;'>";
+            echo "<option value='' selected >All Types</option>"; // Mặc định là tìm tất cả thể loại
 
-            // Lặp qua kết quả và tạo các option
             while ($row = mysqli_fetch_assoc($result_category)) {
-               echo "<option value='" . $row['CateName'] . "'>" . $row['CateName'] . "</option>";
-            }
-
-            // Kết thúc select box
-            echo "</select>";
-         } else {
-            echo "Không có dữ liệu";
-         }
-
-         $sql_product = "SELECT MainAuthor FROM products"; // Thay 'table_name' bằng tên bảng thực tế của bạn
-         $result_product = mysqli_query($conn, $sql_product);
-
-         // Kiểm tra xem có kết quả trả về không
-         if (mysqli_num_rows($result_product) > 0) {
-            // Bắt đầu select box
-            echo "<select name='author' id='author' style='width:75%;'>";
-            echo "<option value='' selected disabled >Author</option>"; // Option mặc định
-
-            // Lặp qua kết quả và tạo các option
-            while ($row = mysqli_fetch_assoc($result_product)) {
-               echo "<option value='" . $row['MainAuthor'] . "'>" . $row['MainAuthor'] . "</option>";
+               // Lưu lại trạng thái thể loại đang chọn khi load lại trang
+               $selected = (isset($_GET['category_name']) && $_GET['category_name'] == $row['CateName']) ? 'selected' : '';
+               echo "<option value='" . $row['CateName'] . "' $selected>" . $row['CateName'] . "</option>";
             }
             echo "</select>";
-            
-            $sql_product = "SELECT PublicationYear FROM products ORDER BY PublicationYear ASC"; // Replace 'table_name' with the actual table name
-            $result_product = mysqli_query($conn, $sql_product);
-            echo "<select name='year' id='year'>";
-            echo "<option value='' selected disabled>Publication Year</option>"; // Default option
-            echo "<option value='1800-1900'>1800-1900</option>";
-            echo "<option value='1900-2000'>1900-2000</option>";
-            echo "<option value='Above_2000'>Above 2000</option>";
-            echo "</select>";
-
-            
-
-            $sql_product = "SELECT Publisher FROM products"; // Thay 'table_name' bằng tên bảng thực tế của bạn
-            $result_product = mysqli_query($conn, $sql_product);
-            echo "<select name='publisher' id='publisher' style='width:75%;'>";
-            echo "<option value='' selected disabled >Publisher</option>"; // Option mặc định
-
-            // Lặp qua kết quả và tạo các option
-            while ($row = mysqli_fetch_assoc($result_product)) {
-               echo "<option value='" . $row['Publisher'] . "'>" . $row['Publisher'] . "</option>";
-            }
-            echo "</select>";
-
-
-            $sql_product = "SELECT DISTINCT Language FROM products"; // Thay 'table_name' bằng tên bảng thực tế của bạn
-            $result_product = mysqli_query($conn, $sql_product);
-            echo "<select name='language' id='language-select'>";
-            echo "<option value='' selected disabled >Language</option>"; // Option mặc định
-
-            // Lặp qua kết quả và tạo các option
-            while ($row = mysqli_fetch_assoc($result_product)) {
-               echo "<option value='" . $row['Language'] . "'>" . $row['Language'] . "</option>";
-            }
-            // Kết thúc select box
-            echo "</select>";
-
-            $sql_product = "SELECT DISTINCT CoverType FROM products"; // Thay 'table_name' bằng tên bảng thực tế của bạn
-            $result_product = mysqli_query($conn, $sql_product);
-            echo "<select name='cover' id='cover'>";
-            echo "<option value='' selected disabled >Cover Type</option>"; // Option mặc định
-
-            // Lặp qua kết quả và tạo các option
-            while ($row = mysqli_fetch_assoc($result_product)) {
-               echo "<option value='" . $row['CoverType'] . "'>" . $row['CoverType'] . "</option>";
-            }
-            // Kết thúc select box
-            echo "</select>";
-
-
-            echo "<input type='text' name = 'min_price' placeholder='Min Price' style='width:58px;border: 1px solid black;border-radius: 5px;font-size: 12px;text-align: center;'>";
-            echo "<input type='text' name = 'max_price' placeholder='Max Price'style='width:59px;border: 1px solid black;border-radius: 5px;font-size: 12px;text-align: center;'>";
-         } else {
-            echo "Không có dữ liệu";
          }
          ?>
 
-
-         <input type="text" name="search" placeholder="search..." class="box">
-         <input type="submit" name="submit" value="search" class="btn">
+         <input type="text" name="search" placeholder="Search for books..." class="box" style="margin: 0; flex: 1;" value="<?php echo isset($_GET['search']) ? $_GET['search'] : ''; ?>">
+         
+         <button type="submit" name="submit_search" class="btn" style="margin: 0;height: 50px; padding: 0 25px;"><i class="fas fa-search"></i> Search</button>
       </form>
    </section>
 
@@ -210,7 +146,7 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
          $initial_page = ($page_number - 1) * $limit;
 
          // 1. TẠO CÂU TRUY VẤN GỐC
-         $sql = "SELECT * FROM products WHERE 1=1 ";
+         $sql = "SELECT products.*, category.CateName FROM products LEFT JOIN category ON products.CategoryId = category.CateId WHERE 1=1 ";
 
          // 2. NỐI THÊM BỘ LỌC NẾU CÓ TÌM KIẾM (Đã chuyển từ $_POST sang $_GET)
          if (isset($_GET['category_name']) && !empty($_GET['category_name'])) {
@@ -272,6 +208,13 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
                      <img src="image/<?php echo $fetch_product['Image']; ?>" alt="" class="image" style="align: center;">
                   </a>
                   <div class="name" style="font-size: 15px;"><?php echo $fetch_product['Name']; ?></div>
+                  
+                  <div class="type" style="font-size: 13px; margin-bottom: 5px; text-align: left;">
+                     <a href="search_page.php?category_name=<?php echo urlencode($fetch_product['CateName']); ?>" class="hover-cate" style="color: #8e44ad; text-decoration: none;">
+                        <?php echo $fetch_product['CateName']; ?>
+                     </a>
+                  </div>
+
                   <div class="price" style="font-size: 15px;">$<?php echo $fetch_product['Price']; ?>/-</div>
                   <input type="number" class="qty" name="product_quantity" min="1" value="1">
                   <input type="hidden" name="product_name" value="<?php echo $fetch_product['Name']; ?>">

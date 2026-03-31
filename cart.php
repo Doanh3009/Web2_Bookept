@@ -113,7 +113,33 @@ if(isset($_GET['delete_all'])){
       <li class="cart-action">
          <div class="cart-btn">
             <a href="shop.php" class="option-btn"><img src="./public/cart/continue.svg" alt="continue_icon">continue shopping</a>
-            <a href="checkout.php" class="btn <?php echo ($grand_total > 1)?'':'disabled'; ?>"><img src="./public/cart/checkout.svg" alt="checkout_icon">proceed to checkout</a>
+            
+            <?php
+            // Kiểm tra kho hàng trước khi cho phép thanh toán
+            $out_of_stock = false;
+            $stock_message = "";
+            
+            // Nối bảng cart và products để lấy số lượng tồn kho (Quantity)
+            $check_stock = mysqli_query($conn, "SELECT cart.name, products.Quantity FROM `cart` JOIN `products` ON cart.name = products.Name WHERE cart.user_id = '$user_id'");
+            
+            if (mysqli_num_rows($check_stock) > 0) {
+                while ($item = mysqli_fetch_assoc($check_stock)) {
+                    if ($item['Quantity'] <= 0) {
+                        $out_of_stock = true;
+                        // Thêm dấu backslash (\\) để tránh lỗi nháy đơn trong JavaScript alert
+                        $stock_message = "Sản phẩm \\'" . $item['name'] . "\\' hiện đã hết hàng trong kho! Vui lòng xóa khỏi giỏ để tiếp tục thanh toán.";
+                        break; 
+                    }
+                }
+            }
+            ?>
+
+            <?php if ($out_of_stock) { ?>
+               <a href="javascript:void(0);" onclick="alert('<?php echo $stock_message; ?>');" class="btn" style="background-color: #e74c3c;"><img src="./public/cart/checkout.svg" alt="checkout_icon">proceed to checkout</a>
+            <?php } else { ?>
+               <a href="checkout.php" class="btn <?php echo ($grand_total > 1)?'':'disabled'; ?>"><img src="./public/cart/checkout.svg" alt="checkout_icon">proceed to checkout</a>
+            <?php } ?>
+
             <a href="cart.php?delete_all" class="delete-btn <?php echo ($grand_total > 1)?'':'disabled'; ?>" onclick="return confirm('delete all from cart?');"><img src="./public/cart/remove.svg" alt="delete_all_icon">delete all</a>
          </div>
          <div class="cart-total">

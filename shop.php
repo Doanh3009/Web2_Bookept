@@ -106,6 +106,17 @@ $offset = ($current_page - 1) * $products_per_page;
         text-decoration: none;
 
     }
+    /* --- HIỆU ỨNG KHI RÀ CHUỘT VÀO TÊN THỂ LOẠI --- */
+      .hover-cate {
+         font-weight: normal !important; 
+         transition: all 0.1s ease-in-out;
+      }
+      
+      .hover-cate:hover {
+         font-weight: bold !important; 
+         text-decoration: underline !important; 
+         color: #8e44ad !important; 
+      }
 </style>
 
 </head>
@@ -123,7 +134,7 @@ $offset = ($current_page - 1) * $products_per_page;
         <h1 class="title">latest products</h1>
         <div class="box-container">
             <?php
-            $select_products = mysqli_query($conn, "SELECT * FROM `products` LIMIT $products_per_page OFFSET $offset") or die('query failed');
+            $select_products = mysqli_query($conn, "SELECT products.*, category.CateName FROM `products` LEFT JOIN `category` ON products.CategoryId = category.CateId LIMIT $products_per_page OFFSET $offset") or die('query failed');
             if (mysqli_num_rows($select_products) > 0) {
                 while ($fetch_products = mysqli_fetch_assoc($select_products)) {
                     if($fetch_products['Status'] == 1)
@@ -143,6 +154,13 @@ $offset = ($current_page - 1) * $products_per_page;
                                 <img src="./public/card/name.svg" alt="name_icon">
                                 <?php echo $fetch_products['Name']; ?>
                             </div>
+
+                            <div class="type" style="font-size: 13px; margin-bottom: 5px; text-align: left;">
+                                <a href="search_page.php?category_name=<?php echo urlencode($fetch_products['CateName']); ?>" class="hover-cate" style="color: #8e44ad; text-decoration: none;">
+                                    <?php echo $fetch_products['CateName']; ?>
+                                </a>
+                            </div>
+
                             <input type="hidden" name="product_name" value="<?php echo $fetch_products['Name']; ?>">
                             <div class="qty-pri">
                                 <input type="number" min="1" name="product_quantity" value="1" class="qty">

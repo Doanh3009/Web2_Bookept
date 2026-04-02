@@ -39,3 +39,124 @@
    </p>
 
 </section>
+</section>
+
+<div id="chatbot-toggle" style="position: fixed; bottom: 80px; right: 20px; width: 60px; height: 60px; background-color: #8e44ad; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 9999;">
+    <i class="fas fa-comments"></i>
+</div>
+
+<div id="chatbot-container" style="display: none; position: fixed; bottom: 150px; right: 20px; width: 350px; height: 450px; background-color: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 9999; flex-direction: column; overflow: hidden; font-family: Arial, sans-serif;">
+    <div style="background-color: #8e44ad; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: bold; font-size: 16px;"><i class="fas fa-robot"></i> Bookworm</span>
+        <span id="close-chatbot" style="cursor: pointer; font-size: 20px;">&times;</span>
+    </div>
+    
+    <div id="chatbot-messages" style="flex: 1; padding: 15px; overflow-y: auto; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 10px;">
+        <div style="background-color: #e0e0e0; color: black; padding: 10px; border-radius: 10px; max-width: 80%; align-self: flex-start; font-size: 14px; line-height: 1.5;">
+            Hello! 👋 I'm Bookworm – your reliable bookstore assistant! I'm here to help you with:<br>
+            📚 Recommending the best books for you<br>
+            📖 Summarizing book plots<br>
+            📦 Checking your order status<br>
+            🚚 Answering shipping and return policies.<br><br>
+            What kind of book are you looking for, or how can I help you today?
+        </div>
+    </div>
+    
+    <div style="display: flex; border-top: 1px solid #ddd; padding: 10px; background: white;">
+        <input type="text" id="chatbot-input" placeholder="Type a message..." style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 20px; outline: none; font-size: 14px;">
+        <button id="chatbot-send" style="background-color: #8e44ad; color: white; border: none; border-radius: 50%; width: 40px; height: 40px; margin-left: 10px; cursor: pointer;">
+            <i class="fas fa-paper-plane"></i>
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('chatbot-toggle');
+    const chatContainer = document.getElementById('chatbot-container');
+    const closeBtn = document.getElementById('close-chatbot');
+    const sendBtn = document.getElementById('chatbot-send');
+    const inputField = document.getElementById('chatbot-input');
+    const messagesArea = document.getElementById('chatbot-messages');
+
+    // Mở/Đóng chat
+    toggleBtn.addEventListener('click', () => {
+        chatContainer.style.display = chatContainer.style.display === 'none' || chatContainer.style.display === '' ? 'flex' : 'none';
+    });
+    closeBtn.addEventListener('click', () => { chatContainer.style.display = 'none'; });
+
+    // Hàm thêm tin nhắn vào khung chat
+    function appendMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.style.padding = '10px';
+        msgDiv.style.borderRadius = '10px';
+        msgDiv.style.maxWidth = '80%';
+        msgDiv.style.fontSize = '14px';
+        msgDiv.style.marginBottom = '10px';
+        msgDiv.style.lineHeight = '1.5';
+        
+        // Render text có xuống dòng
+        msgDiv.innerHTML = text.replace(/\n/g, '<br>');
+
+        if (sender === 'user') {
+            msgDiv.style.backgroundColor = '#8e44ad';
+            msgDiv.style.color = 'white';
+            msgDiv.style.alignSelf = 'flex-end';
+        } else {
+            msgDiv.style.backgroundColor = '#e0e0e0';
+            msgDiv.style.color = 'black';
+            msgDiv.style.alignSelf = 'flex-start';
+        }
+
+        messagesArea.appendChild(msgDiv);
+        messagesArea.scrollTop = messagesArea.scrollHeight; // Cuộn xuống cuối
+    }
+
+    // Xử lý gửi tin nhắn
+    function sendMessage() {
+        const text = inputField.value.trim();
+        if (text === '') return;
+
+        // In tin nhắn của User ra màn hình
+        appendMessage(text, 'user');
+        inputField.value = '';
+
+        // Hiển thị trạng thái "đang gõ..."
+        const typingMsg = document.createElement('div');
+        typingMsg.innerText = 'Bookworm is typing...';
+        typingMsg.style.fontSize = '12px';
+        typingMsg.style.color = '#888';
+        typingMsg.id = 'typing-indicator';
+        messagesArea.appendChild(typingMsg);
+
+        // Gửi dữ liệu lên file PHP bằng AJAX
+        fetch('chatbot_process.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'message=' + encodeURIComponent(text)
+        })
+        .then(response => response.json())
+        .then(data => {
+            const indicator = document.getElementById('typing-indicator');
+            if(indicator) indicator.remove();
+            
+            if(data.reply) {
+                appendMessage(data.reply, 'bot');
+            } else {
+                appendMessage('Sorry, the AI system is experiencing connection issues.', 'bot');
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            const indicator = document.getElementById('typing-indicator');
+            if(indicator) indicator.remove();
+            appendMessage('Network error, please try again later!', 'bot');
+        });
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputField.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+});
+</script>

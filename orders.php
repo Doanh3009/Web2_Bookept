@@ -71,7 +71,7 @@ if (!isset($user_id)) {
                   <td><?php echo $fetch_orders['address']; ?></td>
                   <td><?php echo $fetch_orders['method']; ?></td>
                   <td><?php echo $fetch_orders['total_products']; ?></td>
-                  <td>$<?php echo $fetch_orders['total_price']; ?></td>
+                  <td>$<?php echo number_format($fetch_orders['total_price'], 0, ',', '.'); ?></td>
                   <td><span style="color:<?php if ($fetch_orders['payment_status'] == 'pending' || $fetch_orders['payment_status'] == 'Cancel') {
                                              echo 'red';
                                           } else {

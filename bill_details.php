@@ -136,7 +136,7 @@ $order_info = mysqli_fetch_assoc($sql_order);
                 echo "<td>" . $product_number . "</td>";
                 echo "<td><strong>" . $product_name . "</strong></td>";
                 echo "<td>" . $product_quantity . "</td>";
-                echo "<td>$" . $line_total . "</td>";
+                echo "<td>$" . number_format($line_total, 0, ',', '.') . "</td>";
                 echo "</tr>";
 
                 $product_number++;
@@ -146,7 +146,7 @@ $order_info = mysqli_fetch_assoc($sql_order);
     </table>
 
     <div class="total-row">
-        Grand Total: $<?php echo $order_info['total_price']; ?>
+        Grand Total: $<?php echo number_format($order_info['total_price'], 0, ',', '.'); ?>
     </div>
 
     <a href="bill.php" class="btn-back"><i class="fas fa-arrow-left"></i> Back to History</a>

@@ -216,7 +216,7 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
                   </div>
 
                   <div class="price" style="font-size: 15px;">$<?php echo $fetch_product['Price']; ?>/-</div>
-                  <input type="number" class="qty" name="product_quantity" min="1" value="1">
+                  <input type="number" class="qty" name="product_quantity" min="1" max="100" value="1" oninput="if(this.value > 100) this.value = 100;">
                   <input type="hidden" name="product_name" value="<?php echo $fetch_product['Name']; ?>">
                   <input type="hidden" name="product_price" value="<?php echo $fetch_product['Price']; ?>">
                   <input type="hidden" name="product_image" value="<?php echo $fetch_product['Image']; ?>">

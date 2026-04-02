@@ -96,7 +96,7 @@ $user_id = $_SESSION['user_id'];
                 <td><strong>#<?php echo $fetch_orders['id']; ?></strong></td>
                 <td><?php echo $fetch_orders['placed_on']; ?></td>
                 <td><?php echo $delivery_date; ?></td>
-                <td>$<?php echo $fetch_orders['total_price']; ?></td>
+                <td>$<?php echo number_format($fetch_orders['total_price'], 0, ',', '.'); ?></td>
                 <td style="text-transform: uppercase;"><?php echo $fetch_orders['method']; ?></td>
                 <td style="color: <?php echo $status_color; ?>; font-weight: bold;"><?php echo $fetch_orders['payment_status']; ?></td>
                 <td>

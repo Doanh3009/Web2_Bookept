@@ -199,7 +199,7 @@ if (isset($_POST['add_to_cart'])) {
 
                         <input type="hidden" name="product_name" value="<?php echo $fetch_products['Name']; ?>" >
                         <div class="qty-pri">
-                           <input type="number" min="1" name="product_quantity" value="1" class="qty">
+                           <input type="number" min="1" max="100" name="product_quantity" value="1" class="qty" oninput="if(this.value > 100) this.value = 100;">
                            <div class="price">
                               <span style="font-size:0.7em">$</span><?php echo $fetch_products['Price']; ?>
                            </div>

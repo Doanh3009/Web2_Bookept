@@ -13,6 +13,12 @@ if(!isset($user_id)){
 if(isset($_POST['update_cart'])){
    $cart_id = $_POST['cart_id'];
    $cart_quantity = $_POST['cart_quantity'];
+   
+   // Kiểm tra: Nếu số lượng cập nhật lớn hơn 100 thì ép nó về 100
+   if($cart_quantity > 100) {
+       $cart_quantity = 100;
+   }
+
    mysqli_query($conn, "UPDATE `cart` SET quantity = '$cart_quantity' WHERE id = '$cart_id'") or die('query failed');
    $message[] = 'cart quantity updated!';
 }
@@ -87,12 +93,12 @@ if(isset($_GET['delete_all'])){
          <form action="" method="post" class="cart-item-metrics">
             <div class="item-quantity">
                <input type="hidden" name="cart_id" value="<?php echo $fetch_cart['id']; ?>">
-               <input type="number" min="1" name="cart_quantity" value="<?php echo $fetch_cart['quantity']; ?>">
+               <input type="number" min="1" max="100" name="cart_quantity" value="<?php echo $fetch_cart['quantity']; ?>" oninput="if(this.value > 100) this.value = 100;">
             </div>
             <div class="item-price">
                <div>
-                  <div class="price">$<?php echo $fetch_cart['price']; ?> <span style="font-size: 1em; color:#888"> &bull; (<?php echo $sub_total = ($fetch_cart['quantity']); ?>)</span></div>
-                  <div class="sub-total"> sub total : <span>$<?php echo $sub_total = ($fetch_cart['quantity'] * $fetch_cart['price']); ?></span></div>
+                  <div class="price">$<?php echo number_format($fetch_cart['price'], 0, ',', '.'); ?> <span style="font-size: 1em; color:#888"> &bull; (<?php echo $fetch_cart['quantity']; ?>)</span></div>
+<div class="sub-total"> sub total : <span>$<?php $sub_total = ($fetch_cart['quantity'] * $fetch_cart['price']); echo number_format($sub_total, 0, ',', '.'); ?></span></div>
                </div>
             </div>
             <div class="item-btn">
@@ -143,7 +149,7 @@ if(isset($_GET['delete_all'])){
             <a href="cart.php?delete_all" class="delete-btn <?php echo ($grand_total > 1)?'':'disabled'; ?>" onclick="return confirm('delete all from cart?');"><img src="./public/cart/remove.svg" alt="delete_all_icon">delete all</a>
          </div>
          <div class="cart-total">
-            <p>grand total : <span>$<?php echo $grand_total; ?></span></p>
+            <p>grand total : <span>$<?php echo number_format($grand_total, 0, ',', '.'); ?></span></p>
          </div>
       </li>
    </ul>

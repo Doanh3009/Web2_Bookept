@@ -233,7 +233,7 @@ if (isset($_POST['order_btn'])) {
             ?>
                   <div class="summary-item">
                      <p><?php echo $fetch_cart['name']; ?></p>
-                     <p><?php echo '$' . $fetch_cart['price']; ?> &bull; <?php echo $fetch_cart['quantity']; ?></p>
+                     <p>$<?php echo number_format($fetch_cart['price'], 0, ',', '.'); ?> &bull; <?php echo $fetch_cart['quantity']; ?></p>
                   </div>
             <?php
                }
@@ -244,7 +244,7 @@ if (isset($_POST['order_btn'])) {
          </div>
          <div class="summary-total">
             <p><i class="fa-solid fa-border-all"></i> grand total : </p>
-            <p style="color:red">$<?php echo $grand_total; ?></p>
+            <p style="color:red">$<?php echo number_format($grand_total, 0, ',', '.'); ?></p>
          </div>
       </div>
          <div id="paymentModal" class="payment-modal">

@@ -9,7 +9,7 @@ if(isset($_GET['id']))
         if(mysqli_num_rows($sql)>0)
     {
         $check= mysqli_fetch_assoc($sql);
-        $phone = $name = $email = $address = $city = $road = $district = $ward = "";
+        $phone = $name = $email = $address = $city = $road = $ward = "";
 
     // Check if phone number is set and not empty in $_POST
 
@@ -91,13 +91,6 @@ if(isset($_GET['id']))
               $check6=true;
             
       }
-  
-      // Check if district is set and not empty in $_POST
-      if (isset($_POST['district'])) {
-          $district = $_POST['district'];
-              $queries[] .= "UPDATE `users` SET `district` = '$district' WHERE id = $user_id";
-              $_SESSION['district'] = $district;
-              $check7=true;
             
       }
   
@@ -128,14 +121,14 @@ if(isset($_GET['id']))
           }
         }
       }
-      if ($check1==true && $check2==true && $check3==true && $check4==true && $check5==true && $check6==true && $check7==true && $check8==true) {
+      if ($check1==true && $check2==true && $check3==true && $check4==true && $check5==true && $check6==true && $check8==true) {
         // Nếu đã thành công, hiển thị thông báo
         $message[] = 'Update data successfully';
       }
       
       }
 }
-}
+
 
 if (isset($_POST["finish"])) {
     header("location:admin_users.php");
@@ -239,23 +232,7 @@ if (isset($message) && is_array($message)) {
             </select>
         </td>
     </tr>
-    <tr>
-        <td><label for="district">District:</label></td>
-        <td>
-            <select class="form-select form-select-sm mb-3" name="district" id="district" aria-label=".form-select-sm">
-                <option value="" selected disabled >Choose district</option>
-                <?php
-                for ($i = 1; $i <= 12; $i++) {
-                  $selected = ($_POST['district'] == "District $i") ? 'selected' : '';
-                  "<option value='District $i' $selected>District $i</option>";
-                  $selected = ($check['district'] == "District $i") ? 'selected' : '';
-                  echo "<option value='District $i' $selected>District $i</option>";
-              }
-                
-                ?>
-            </select>
-        </td>
-    </tr>
+    
     <tr>
         <td><label for="city">City:</label></td>
         <td>
@@ -287,11 +264,10 @@ if (isset($message) && is_array($message)) {
       var address = document.getElementById('address').value.trim();
       var city = document.getElementById('city').value.trim();
       var road = document.getElementById('road').value.trim();
-      var district = document.getElementById('district').value.trim();
       var ward = document.getElementById('ward').value.trim();
       
       // Check if any field is empty
-      if (name === "" || phone === "" || email === "" || address === "" || city === "" || road === "" || district === "" || ward === "") {
+      if (name === "" || phone === "" || email === "" || address === "" || city === "" || road === "" || ward === "") {
         event.preventDefault(); // Prevent form submission
         alert("You should fill out the form completely."); // Show error message
 
@@ -308,8 +284,6 @@ if (isset($message) && is_array($message)) {
           document.getElementById("city").focus();
         } else if (road === "") {
           document.getElementById("road").focus();
-        } else if (district === "") {
-          document.getElementById("district").focus();
         } else if (ward === "") {
           document.getElementById("ward").focus();
         }

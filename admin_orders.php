@@ -73,16 +73,6 @@ if (!isset($admin_id)) {
             <div class="admin-control" style="background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;">
                <form method="GET" action="admin_orders.php" style="display: flex; flex-wrap: wrap; gap: 15px; align-items: flex-end; width: 100%;">
                   
-                  <div style="flex: 1; min-width: 150px;">
-                     <label class="form-label">District</label>
-                     <select name="district" class="form-control">
-                        <option value="">All Districts</option>
-                        <?php for ($i = 1; $i <= 12; $i++) {
-                           $selected = (isset($_GET['district']) && $_GET['district'] == "District $i") ? 'selected' : '';
-                           echo "<option value='District $i' $selected>District $i</option>";
-                        } ?>
-                     </select>
-                  </div>
 
                   <div style="flex: 1; min-width: 150px;">
                      <label class="form-label">Ward</label>
@@ -140,11 +130,6 @@ if (!isset($admin_id)) {
                      // --- DYNAMIC SQL LOGIC (Saves 300 lines of code) ---
                      $query = "SELECT * FROM orders WHERE 1=1"; 
                      
-                     // Filter by Address (using LIKE because address contains ward/district)
-                     if (!empty($_GET['district'])) {
-                         $dist = mysqli_real_escape_string($conn, $_GET['district']);
-                         $query .= " AND address LIKE '%$dist%'";
-                     }
                      if (!empty($_GET['ward'])) {
                          $ward = mysqli_real_escape_string($conn, $_GET['ward']);
                          $query .= " AND address LIKE '%$ward%'";

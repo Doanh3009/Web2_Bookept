@@ -19,10 +19,9 @@ if (isset($_POST['order_btn'])) {
    $house_number = mysqli_real_escape_string($conn, $_POST['house-num']);
    $road = mysqli_real_escape_string($conn, $_POST['road']);
    $ward = mysqli_real_escape_string($conn, $_POST['ward']);
-   $district =  mysqli_real_escape_string($conn, $_POST['district']);
    $city = mysqli_real_escape_string($conn, $_POST['city']);
 
-   $address = "flat no. $house_number, $road, $ward, $district, $city, $country";
+   $address = "flat no. $house_number, $road, $ward, $city, $country";
    $placed_on = date('Y-m-d');
 
    $cart_total = 0;
@@ -153,21 +152,7 @@ if (isset($_POST['order_btn'])) {
                   ?>
                </select>
             </div>
-            <div class="inputBox">
-               <span><i class="fa-solid fa-location-dot"></i> district :</span>
-               <br>
-               <select required class="" name="district" id="district" aria-label=".form-select-sm">
-                  <option value="" selected disabled>Choose district</option>
-                  <?php
-                  for ($i = 1; $i <= 12; $i++) {
-                     $selected = ($_POST['district'] == "District $i") ? 'selected' : '';
-                     "<option value='District $i' $selected>District $i</option>";
-                     $selected = ($check['district'] == "District $i") ? 'selected' : '';
-                     echo "<option value='District $i' $selected>District $i</option>";
-                  }
-                  ?>
-               </select>
-            </div>
+            
             <div class="inputBox">
                <span><i class="fa-solid fa-location-dot"></i> city :</span>
                <br>
@@ -199,7 +184,6 @@ if (isset($_POST['order_btn'])) {
          $house_number = mysqli_real_escape_string($conn, $_POST['house-num']);
          $road = mysqli_real_escape_string($conn, $_POST['road']);
          $ward = mysqli_real_escape_string($conn, $_POST['ward']);
-         $district = mysqli_real_escape_string($conn, $_POST['district']);
          $city = mysqli_real_escape_string($conn, $_POST['city']);
 
          // Kiểm tra xem email đã tồn tại trong bảng users chưa
@@ -208,7 +192,7 @@ if (isset($_POST['order_btn'])) {
 
          if (mysqli_num_rows($result_check_email) > 0) {
             // Cập nhật thông tin người dùng nếu email đã tồn tại
-            $sql_update_user = "UPDATE users SET  phone_number = '$number',  house_number = '$house_number', road = '$road', city = '$city', district = '$district', ward = '$ward' WHERE email = '$email'";
+            $sql_update_user = "UPDATE users SET  phone_number = '$number',  house_number = '$house_number', road = '$road', city = '$city', ward = '$ward' WHERE email = '$email'";
             if (mysqli_query($conn, $sql_update_user)) {
                echo "<strong style='font-size:14px;'>Thông tin người dùng đã được cập nhật thành công !</strong>";
             } else {

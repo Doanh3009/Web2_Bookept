@@ -182,7 +182,6 @@ CREATE TABLE `users` (
   `house_number` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `road` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `ward` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `district` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `city` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   `user_type` varchar(20) NOT NULL DEFAULT 'user',
   `status` tinyint(1) NOT NULL,
@@ -193,10 +192,10 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone_number`, `house_number`, `road`, `ward`, `district`, `city`, `user_type`, `status`, `date_time`) VALUES
+INSERT INTO `users` (`id`, `name`, `email`, `password`, `phone_number`, `house_number`, `road`, `ward`, `city`, `user_type`, `status`, `date_time`) VALUES
 (2, 'admin', 'admin@gmail.com', '4297f44b13955235245b2497399d7a93', '', '', '', '', '', '', 'admin', 0, '0000-00-00 00:00:00'),
-(3, 'khang', 'khang@gmail.com', '4297f44b13955235245b2497399d7a93', '0987654321', '123', 'Ba Dinh', 'Ward 12', 'District 2', 'Hồ Chí Minh', 'user', 1, '2024-05-11 13:50:20'),
-(4, 'doanh', 'doanh@gmail.com', '4297f44b13955235245b2497399d7a93', '0987654321', '123', 'Ba Dinh', 'Ward 12', 'District 2', 'Hồ Chí Minh', 'user', 1, '2024-05-11 13:50:20');
+(3, 'khang', 'khang@gmail.com', '4297f44b13955235245b2497399d7a93', '0987654321', '123', 'Ba Dinh', 'Ward 12', 'Hồ Chí Minh', 'user', 1, '2024-05-11 13:50:20'),
+(4, 'doanh', 'doanh@gmail.com', '4297f44b13955235245b2497399d7a93', '0987654321', '123', 'Ba Dinh', 'Ward 12', 'Hồ Chí Minh', 'user', 1, '2024-05-11 13:50:20');
 
 --
 -- Indexes for dumped tables

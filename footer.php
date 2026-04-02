@@ -69,7 +69,24 @@
         </button>
     </div>
 </div>
-
+<style>
+/* Hiệu ứng sóng lượn cho dấu 3 chấm */
+@keyframes typing-wave {
+    0%, 60%, 100% { transform: translateY(0); }
+    30% { transform: translateY(-4px); }
+}
+.typing-dot {
+    display: inline-block;
+    animation: typing-wave 1.3s infinite ease-in-out;
+    font-weight: bold;
+    font-size: 16px;
+    color: #8e44ad; /* Màu tím cho đồng bộ */
+}
+/* Độ trễ để tạo thành làn sóng */
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const toggleBtn = document.getElementById('chatbot-toggle');
@@ -78,6 +95,22 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendBtn = document.getElementById('chatbot-send');
     const inputField = document.getElementById('chatbot-input');
     const messagesArea = document.getElementById('chatbot-messages');
+
+    // ==========================================
+    // 1. KHÔI PHỤC LỊCH SỬ CHAT KHI LOAD TRANG
+    // ==========================================
+    const savedChat = localStorage.getItem('bookept_chat_history');
+    if (savedChat) {
+        messagesArea.innerHTML = savedChat;
+        messagesArea.scrollTop = messagesArea.scrollHeight; // Cuộn xuống cuối
+    }
+
+    // ==========================================
+    // 2. HÀM LƯU TRỮ LỊCH SỬ CHAT
+    // ==========================================
+    function saveChatHistory() {
+        localStorage.setItem('bookept_chat_history', messagesArea.innerHTML);
+    }
 
     // Mở/Đóng chat
     toggleBtn.addEventListener('click', () => {
@@ -110,6 +143,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         messagesArea.appendChild(msgDiv);
         messagesArea.scrollTop = messagesArea.scrollHeight; // Cuộn xuống cuối
+        
+        // LƯU LẠI LỊCH SỬ NGAY SAU KHI THÊM TIN NHẮN
+        saveChatHistory();
     }
 
     // Xử lý gửi tin nhắn
@@ -121,13 +157,18 @@ document.addEventListener('DOMContentLoaded', function() {
         appendMessage(text, 'user');
         inputField.value = '';
 
-        // Hiển thị trạng thái "đang gõ..."
+        // Hiển thị trạng thái "đang gõ..." với hiệu ứng sóng
         const typingMsg = document.createElement('div');
-        typingMsg.innerText = 'Bookworm is typing...';
-        typingMsg.style.fontSize = '12px';
-        typingMsg.style.color = '#888';
         typingMsg.id = 'typing-indicator';
+        typingMsg.style.fontSize = '13px';
+        typingMsg.style.color = '#888';
+        typingMsg.style.fontStyle = 'italic';
+        typingMsg.style.marginBottom = '10px';
+        // Lắp các dấu chấm vào thẻ span để chạy animation
+        typingMsg.innerHTML = 'Bookworm is typing <span class="typing-dot">.</span><span class="typing-dot">.</span><span class="typing-dot">.</span>';
+        
         messagesArea.appendChild(typingMsg);
+        messagesArea.scrollTop = messagesArea.scrollHeight; // Tự động cuộn xuống để nhìn thấy AI đang gõ
 
         // Gửi dữ liệu lên file PHP bằng AJAX
         fetch('chatbot_process.php', {

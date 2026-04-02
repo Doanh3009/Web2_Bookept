@@ -83,7 +83,7 @@ if (isset($message)) {
                ?>
             </div>
          </div>
-         <a href="shop.php"><img src="public/header/shop_icon.svg" alt="shop_icon">shop</a>
+         <a href="shop.php"><img src="public/header/store.png" style="height: 20px; padding-right: 5px; alt="shop_icon">shop</a>
          <a href="bill.php"><img src="public/header/contact_icon.svg" alt="contact_icon">bill</a>
          <a href="orders.php"><img src="public/header/order_icon.svg" alt="order_icon">orders</a>
       </nav>

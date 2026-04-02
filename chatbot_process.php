@@ -1,8 +1,6 @@
 <?php
-// Bật bộ đệm đầu ra để tránh lỗi "Network error"
+// Ngăn lỗi "Network error" do các khoảng trắng dư thừa
 ob_start(); 
-
-// BẮT BUỘC: Kết nối database để lấy hình ảnh, giá, ID
 include 'config.php';
 
 error_reporting(E_ALL);
@@ -16,40 +14,43 @@ if (!isset($_POST['message'])) {
 }
 $user_message = $_POST['message'];
 
-// API KEY CỦA BẠN
-$api_key = 'AIzaSyArPVTUhomlvtImGgnH0mgVkCg1op4VJw4'; 
-$api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=' . $api_key;
+// ĐỊA CHỈ API CỦA OLLAMA (Local AI)
+$api_url = 'http://localhost:11434/api/generate';
 
 // ==========================================
-// BƯỚC 1: LẤY DANH SÁCH SÁCH TỪ KHO ĐỂ DẠY AI
+// BƯỚC 1: LẤY TOÀN BỘ THÔNG TIN SÁCH ĐỂ "DẠY" AI
 // ==========================================
 $available_books = "";
-$query_books = mysqli_query($conn, "SELECT Name FROM products");
+$query_books = mysqli_query($conn, "SELECT products.Name, products.Price, products.MainAuthor, products.Publisher, category.CateName FROM products LEFT JOIN category ON products.CategoryId = category.CateId");
+
 if($query_books) {
     while($row = mysqli_fetch_assoc($query_books)) {
-        $available_books .= "- " . $row['Name'] . "\n";
+        $cate_name = isset($row['CateName']) ? $row['CateName'] : 'Unknown';
+        $author = isset($row['MainAuthor']) ? $row['MainAuthor'] : 'Unknown';
+        $publisher = isset($row['Publisher']) ? $row['Publisher'] : 'Unknown';
+        $price = isset($row['Price']) ? $row['Price'] : '0';
+        
+        // Ép AI học chuỗi dữ liệu: Tên sách (Category | Author | Publisher | Price)
+        $available_books .= "- " . $row['Name'] . " (Category: " . $cate_name . " | Author: " . $author . " | Publisher: " . $publisher . " | Price: $" . $price . ")\n";
     }
 }
 
 // ==========================================
-// BƯỚC 2: CẤP NHẬT LUẬT LỆ KHẮT KHE CHO AI
+// BƯỚC 2: THIẾT LẬP LUẬT CHƠI (ÉP KHUÔN 9 THỂ LOẠI CỦA WEB)
 // ==========================================
-$system_prompt = "You are a virtual online book assistant named 'Bookworm'. Your mission is to provide an excellent book shopping experience. 
-CRITICAL RULE 1: You can ONLY recommend books from this exact list of available books in our store:\n" . $available_books . "
-Do NOT recommend any books that are not on this list.
-CRITICAL RULE 2: Whenever you recommend or mention these books, you MUST append a secret tag at the very end of your response in this exact format: [PRODUCT: Book Name]. 
-If recommending multiple books, separate them by commas: [PRODUCT: Verity, Ugly Love].
-Do NOT put the tag inside markdown code blocks. Briefly describe the book's genre and summary in your message.";
-
+$system_prompt = "You are a virtual online book assistant named 'Bookworm'. 
+CRITICAL RULE 1: You can ONLY recommend books from this exact list:
+\n" . $available_books . "
+CRITICAL RULE 2: The ONLY valid categories in this store are: ADVENTURE, COMEDY, DRAMA, HOROR, HISTORY, NOVEL, ROMANCE, SCHOOL, SCI FI. 
+CRITICAL RULE 3: STRICT MATCHING. If the customer asks for a category, you MUST ONLY match it with books that explicitly have that exact category name in their 'Category:' field from the list. Do NOT use general English definitions (e.g., do not treat all fiction as 'NOVEL', only books explicitly marked as 'Category: NOVEL'). If a user asks for 'horror', map it to the 'HOROR' category.
+CRITICAL RULE 4: Whenever you mention a book, you MUST append: [PRODUCT: Exact Book Name].
+CRITICAL RULE 5: DO NOT generate, invent, or include any URLs, links, or website addresses.
+CRITICAL RULE 6: DO NOT mention the price of the book in your text response.
+Keep your response brief and friendly in English.";
 $data = [
-    "contents" => [
-        [
-            "role" => "user",
-            "parts" => [
-                ["text" => $system_prompt . "\n\nCustomer says: " . $user_message]
-            ]
-        ]
-    ]
+    "model" => "phi3",
+    "prompt" => $system_prompt . "\n\nCustomer: " . $user_message,
+    "stream" => false 
 ];
 
 $ch = curl_init($api_url);
@@ -57,83 +58,50 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 
 $response = curl_exec($ch);
-
-if (curl_errno($ch)) {
-    ob_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['reply' => 'Server Connection Error: ' . curl_error($ch)]);
-    curl_close($ch);
-    exit;
-}
 curl_close($ch);
 
 $result = json_decode($response, true);
-
-if (isset($result['error'])) {
-    ob_clean();
-    header('Content-Type: application/json');
-    echo json_encode(['reply' => 'Google API Error: ' . $result['error']['message']]);
-    exit;
-}
-
-$bot_reply = "Sorry, Bookworm is experiencing a connection issue. Please try again later.";
-if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
-    $bot_reply = $result['candidates'][0]['content']['parts'][0]['text'];
-}
+$bot_reply = $result['response'] ?? "Sorry, my local brain is sleeping. Please make sure Ollama is running!";
 
 // ==========================================
-// BƯỚC 3: QUÉT MÃ VÀ HIỂN THỊ SẢN PHẨM MẠNH MẼ HƠN
+// BƯỚC 3: HIỂN THỊ SẢN PHẨM (Có chữ 'i' để quét mọi loại chữ hoa/thường)
 // ==========================================
-// Dùng preg_match_all để bắt được mọi thẻ [PRODUCT]
-if (preg_match_all('/\[PRODUCT:(.*?)\]/', $bot_reply, $matches)) {
+if (preg_match_all('/\[PRODUCT:(.*?)\]/i', $bot_reply, $matches)) {
     $html_cards = '<div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">';
-    $found_any = false;
     
     foreach ($matches[1] as $match) {
-        $product_names = explode(',', $match);
-        
-        foreach ($product_names as $p_name) {
-            $p_name = mysqli_real_escape_string($conn, trim($p_name));
+        $p_names = explode(',', $match);
+        foreach ($p_names as $p_name) {
             
-            // Tìm kiếm sản phẩm theo Name 
+            // Cắt bỏ phần dư thừa nếu AI lỡ gõ thêm "(Category: ...)" vào trong thẻ
+            $p_name = trim(preg_replace('/\(.*$/', '', $p_name)); 
+            $p_name = mysqli_real_escape_string($conn, $p_name);
+            
+            // Tìm sản phẩm trong DB
             $res = mysqli_query($conn, "SELECT * FROM products WHERE Name LIKE '%$p_name%' LIMIT 1");
-            
             if ($res && $product_row = mysqli_fetch_assoc($res)) {
-                $found_any = true;
-                // Lấy đúng Id, Name, Price, Image (Viết hoa chữ cái đầu theo Database của bạn)
-                $book_id = $product_row['Id']; 
-                $book_name = $product_row['Name']; 
-                $book_price = number_format($product_row['Price'], 0, ',', '.'); 
-                $book_image = 'image/' . $product_row['Image']; 
-
+                
+                // VẼ GIAO DIỆN THẺ HTML (Sửa link thành product_id và bỏ target="_blank")
                 $html_cards .= '
-                <a href="products_details.php?id='.$book_id.'" target="_blank" style="display: flex; text-decoration: none; color: inherit; background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: background 0.2s; margin-bottom: 5px;">
-                    <img src="'.$book_image.'" style="width: 50px; height: 70px; object-fit: cover; border-radius: 4px; margin-right: 12px; border: 1px solid #eee;" onerror="this.src=\'image/10.jpeg\'">
+                <a href="products_details.php?product_id='.$product_row['Id'].'" style="display: flex; text-decoration: none; color: inherit; background: white; border: 1px solid #ddd; padding: 10px; border-radius: 8px; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <img src="image/'.$product_row['Image'].'" style="width: 50px; height: 70px; object-fit: cover; border-radius: 4px; margin-right: 12px;">
                     <div style="flex: 1;">
-                        <div style="font-weight: bold; font-size: 14px; color: #8e44ad; margin-bottom: 4px; line-height: 1.2;">'.$book_name.'</div>
-                        <div style="color: #e74c3c; font-weight: bold; font-size: 13px;">$'.$book_price.'</div>
+                        <div style="font-weight: bold; font-size: 14px; color: #8e44ad;">'.$product_row['Name'].'</div>
+                        <div style="color: #e74c3c; font-weight: bold;">$'.number_format($product_row['Price'], 0, ',', '.').'</div>
                     </div>
-                    <div style="color: white; background-color: #8e44ad; padding: 5px 10px; border-radius: 5px; font-size: 12px; font-weight: bold;">View ➔</div>
+                    <div style="color: #8e44ad; font-weight: bold; font-size: 12px;">View ➔</div>
                 </a>';
             }
         }
     }
     $html_cards .= '</div>';
     
-    // Cắt bỏ hết mấy chữ [PRODUCT:...] dư thừa ra khỏi văn bản chat
-    $bot_reply = preg_replace('/\[PRODUCT:(.*?)\]/', '', $bot_reply);
-    
-    // Nếu quét thấy sách thật trong Database thì mới nối giao diện thẻ vào
-    if($found_any) {
-        $bot_reply .= $html_cards;
-    }
+    // Cắt mã [Product] đi và nối thẻ HTML vào
+    $bot_reply = preg_replace('/\[PRODUCT:(.*?)\]/i', '', $bot_reply) . $html_cards;
 }
 
-// Xóa sạch bộ đệm và trả về JSON chuẩn
 ob_end_clean(); 
 header('Content-Type: application/json');
 echo json_encode(['reply' => $bot_reply]);

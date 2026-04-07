@@ -12,7 +12,7 @@ if (!isset($_POST['message'])) {
     exit;
 }
 $user_message = $_POST['message'];
-$api_url = 'http://localhost:11434/api/generate';
+$api_url = 'https://quiescent-unevenly-darrick.ngrok-free.dev/api/generate';
 
 // ==========================================
 // BƯỚC 1: BỘ LỌC THÔNG MINH BẰNG PHP (PRE-FILTERING)
@@ -32,7 +32,7 @@ $category_keywords = [
 // Quét xem khách có nhắc đến thể loại nào không
 foreach($category_keywords as $keyword => $cate_id) {
     if(strpos($user_msg_lower, $keyword) !== false) {
-        // Nối thêm lệnh WHERE vào SQL giống hệt như trang search_page.php của bạn
+        // Nối thêm lệnh WHERE vào SQL
         $sql_query .= " WHERE products.CategoryId = '$cate_id'";
         break; // Lọc 1 thể loại là đủ, thoát vòng lặp
     }

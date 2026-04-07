@@ -43,6 +43,7 @@
 
 <div id="chatbot-toggle" style="position: fixed; bottom: 80px; right: 20px; width: 60px; height: 60px; background-color: #8e44ad; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 30px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 9999;">
     <i class="fas fa-comments"></i>
+    <span id="chatbot-badge" style="position: absolute; top: -5px; right: -5px; background-color: #e74c3c; color: white; font-size: 13px; font-weight: bold; font-family: Arial, sans-serif; width: 22px; height: 22px; border-radius: 50%; display: none; justify-content: center; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); border: 2px solid white;">1</span>
 </div>
 
 <div id="chatbot-container" style="display: none; position: fixed; bottom: 150px; right: 20px; width: 350px; height: 450px; background-color: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 9999; flex-direction: column; overflow: hidden; font-family: Arial, sans-serif;">
@@ -54,11 +55,10 @@
     <div id="chatbot-messages" style="flex: 1; padding: 15px; overflow-y: auto; background-color: #f9f9f9; display: flex; flex-direction: column; gap: 10px;">
         <div style="background-color: #e0e0e0; color: black; padding: 10px; border-radius: 10px; max-width: 80%; align-self: flex-start; font-size: 14px; line-height: 1.5;">
             Hello! 👋 I'm Bookworm – your reliable bookstore assistant! I'm here to help you with:<br>
-            📚 Recommending the best books for you<br>
-            📖 Summarizing book plots<br>
-            📦 Checking your order status<br>
-            🚚 Answering shipping and return policies.<br><br>
-            What kind of book are you looking for, or how can I help you today?
+            📚 Finding the perfect book for your taste<br>
+            🔍 Searching for books by your favorite categories<br>
+            💡 Recommending top authors in our store<br><br>
+            What kind of book are you looking for today?
         </div>
     </div>
     
@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const sendBtn = document.getElementById('chatbot-send');
     const inputField = document.getElementById('chatbot-input');
     const messagesArea = document.getElementById('chatbot-messages');
+    const badge = document.getElementById('chatbot-badge'); // MỚI THÊM: Khai báo badge
+
+    // MỚI THÊM: Kiểm tra xem phiên đăng nhập này khách đã bấm xem AI chưa
+    // Nếu chưa bấm, cho hiển thị số 1 lên
+    if (!sessionStorage.getItem('bookept_ai_read')) {
+        badge.style.display = 'flex';
+    }
 
     // ==========================================
     // 1. KHÔI PHỤC LỊCH SỬ CHAT KHI LOAD TRANG
@@ -115,7 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mở/Đóng chat
     toggleBtn.addEventListener('click', () => {
         chatContainer.style.display = chatContainer.style.display === 'none' || chatContainer.style.display === '' ? 'flex' : 'none';
+        
+        // MỚI THÊM: Khi khách bấm vào icon, ẩn số 1 đi và lưu vào bộ nhớ tạm
+        if (badge.style.display !== 'none') {
+            badge.style.display = 'none';
+            sessionStorage.setItem('bookept_ai_read', 'true');
+        }
     });
+
     closeBtn.addEventListener('click', () => { chatContainer.style.display = 'none'; });
 
     // Hàm thêm tin nhắn vào khung chat

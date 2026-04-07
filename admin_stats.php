@@ -241,7 +241,7 @@ function parseOrderProducts($total_products_string) {
                                         $import_data[$p_name]['details'][] = "<a href='$link' style='color: #8e44ad; text-decoration: none; font-weight: 500;'>Receipt #{$row['ReceiptId']} ({$row['ImportDate']}): +{$row['Quantity']}</a>";
                                     }
 
-                                    // 2. LẤY CHI TIẾT ĐƠN HÀNG XUẤT
+                                    // 2. LẤY CHI TIẾT ĐƠN HÀNG XUẤT    
                                     $orders_q = mysqli_query($conn, "SELECT id as OrderId, placed_on, total_products 
                                                                     FROM orders 
                                                                     WHERE payment_status = 'Delivered' AND placed_on BETWEEN '$start_date' AND '$end_date'");
@@ -354,12 +354,12 @@ function parseOrderProducts($total_products_string) {
                             $all_products = mysqli_query($conn, "SELECT Name, Quantity FROM products");
                             while($row = mysqli_fetch_assoc($all_products)) {
                                 $p_name = $row['Name'];
-                                // Vẫn phải giữ biến $current_qty ở ngầm bên dưới để làm mốc tính toán lùi về quá khứ
+                                
                                 $current_qty = (int)$row['Quantity']; 
                                 
                                 $s_after = isset($sold_after[$p_name]) ? $sold_after[$p_name] : 0;
                                 $i_after = isset($imported_after[$p_name]) ? $imported_after[$p_name] : 0;
-                                
+                                // Tồn quá khứ = Tồn hiện tại + Số đã bán ra - Số đã nhập vào
                                 $past_qty = $current_qty + $s_after - $i_after;
                             ?>
                             <tr>

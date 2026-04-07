@@ -59,7 +59,7 @@ if (!isset($user_id)) {
             <td>status</td>
          </tr>
          <?php
-         $order_query = mysqli_query($conn, "SELECT * FROM `orders` WHERE user_id = '$user_id'") or die('query failed');
+         $order_query = mysqli_query($conn, "SELECT * FROM `orders` WHERE user_id = '$user_id' ORDER BY id DESC") or die('query failed');
          if (mysqli_num_rows($order_query) > 0) {
             while ($fetch_orders = mysqli_fetch_assoc($order_query)) {
          ?>

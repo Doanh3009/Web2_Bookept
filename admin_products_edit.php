@@ -301,16 +301,6 @@ if (isset($_POST['edit'])) {
                             </div>
 
                             <div class="form-group">
-                                <label class="form-label">Product Code</label>
-                                <input name="ProductCode" value="<?php echo isset($fetch_products_edit['ProductCode']) ? $fetch_products_edit['ProductCode'] : ''; ?>" type="text" class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label class="form-label">Unit</label>
-                                <input name="Unit" value="<?php echo isset($fetch_products_edit['Unit']) ? $fetch_products_edit['Unit'] : ''; ?>" type="text" class="form-control">
-                            </div>
-
-                            <div class="form-group">
                                 <label class="form-label">Status</label>
                                 <select name="Status" class="form-control" style="width: 100%; height: 40px; border-radius: 5px; background: #eee; border:none; padding: 0 10px;">
                                     <option value="1" <?php if($fetch_products_edit['Status'] == '1') echo 'selected'; ?>>
@@ -346,11 +336,7 @@ if (isset($_POST['edit'])) {
                                 <input id="cover" name="CoverType" value="<?php echo $fetch_products_edit['CoverType'] ?>" type="text" class="form-control">
                                 <span class="form-message"></span>
                             </div>
-                            <div class="form-group">
-                                <label for="quanitiy" class="form-label">Quantity</label>
-                                <input id="quanitiy" name="Quantity" value="<?php echo $fetch_products_edit['Quantity'] ?>" type="number" min="0" class="form-control">
-                                <span class="form-message"></span>
-                            </div>
+                            
                             <div class="form-group">
                                 <label for="mo-ta" class="form-label">Description</label>
                                 <textarea class="product-desc" id="mo-ta" name="Description" placeholder="Enter description..."><?php echo $fetch_products_edit['Description'] ?></textarea>

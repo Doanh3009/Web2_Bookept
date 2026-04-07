@@ -25,8 +25,10 @@ if (isset($_GET['reset'])) {
 // 2. Lưu trạng thái Low Stock
 if (isset($_GET['threshold'])) {
     $_SESSION['stats_threshold'] = (int)$_GET['threshold'];
+    $_SESSION['stats_include_hidden'] = isset($_GET['include_hidden']) ? 1 : 0;
 }
 $threshold = isset($_SESSION['stats_threshold']) ? $_SESSION['stats_threshold'] : 10;
+$include_hidden = isset($_SESSION['stats_include_hidden']) ? $_SESSION['stats_include_hidden'] : 0;
 
 // 3. Lưu trạng thái Import/Export
 if (isset($_GET['ie_start']) && isset($_GET['ie_end'])) {
@@ -146,18 +148,23 @@ function parseOrderProducts($total_products_string) {
                 <div class="report-card">
                     <h2 class="report-title"><i class="fa fa-exclamation-triangle" style="color: #e63946;"></i> Low Stock Alert</h2>
                     
-                    <form method="GET" class="report-form">
+                    <form method="GET" class="report-form" style="align-items: center;">
                         <div>
                             <label class="form-label">Set Low Stock Threshold (Units):</label>
                             <input type="number" name="threshold" value="<?php echo $threshold; ?>" min="0" class="form-control" style="width: 200px;">
                         </div>
-                        <button type="submit" class="option-btn" style="margin:0; padding: 10px 20px;">Check</button>
+                        
+                        <div style="display: flex; align-items: center; margin-bottom: 0; margin-left: 10px;">
+                            <input type="checkbox" id="include_hidden" name="include_hidden" value="1" <?php echo $include_hidden ? 'checked' : ''; ?> style="width: 18px; height: 18px; cursor: pointer;">
+                            <label for="include_hidden" style="cursor: pointer; font-size: 0.95rem; color: #555; margin-left: 8px; font-weight: 500;">Include hidden products</label>
+                        </div>
+
+                        <button type="submit" class="option-btn" style="margin: 0 0 0 15px; padding: 10px 20px;">Check</button>
                     </form>
 
                     <table class="table">
                         <thead>
                             <tr>
-                                <td>Product Code</td>
                                 <td>Product Name</td>
                                 <td>Current Stock</td>
                                 <td>Status</td>
@@ -165,19 +172,30 @@ function parseOrderProducts($total_products_string) {
                         </thead>
                         <tbody>
                             <?php
-                            $low_stock_q = mysqli_query($conn, "SELECT ProductCode, Name, Quantity FROM products WHERE Quantity <= '$threshold' AND Status = 1");
+                            // Đã xóa ProductCode khỏi câu lệnh SELECT cho nhẹ Database
+                            $status_condition = $include_hidden ? "" : "AND Status = 1";
+                            $low_stock_q = mysqli_query($conn, "SELECT Name, Quantity, Status FROM products WHERE Quantity <= '$threshold' $status_condition");
+
                             if (mysqli_num_rows($low_stock_q) > 0) {
                                 while ($row = mysqli_fetch_assoc($low_stock_q)) {
                                     $warning_color = ($row['Quantity'] == 0) ? 'red' : 'orange';
                                     $warning_text = ($row['Quantity'] == 0) ? 'Out of Stock' : 'Low Stock';
+                                    
+                                    // Tạo nhãn Hidden nếu sản phẩm đó đang bị ẩn
+                                    $status_badge = ($row['Status'] == 0) ? '<span style="background: #95a5a6; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; margin-left: 10px; vertical-align: middle;">Hidden</span>' : '';
                             ?>
                             <tr>
-                                <td><?php echo $row['ProductCode']; ?></td>
-                                <td><strong><?php echo $row['Name']; ?></strong></td>
+                                <td><strong><?php echo $row['Name']; ?></strong> <?php echo $status_badge; ?></td>
                                 <td style="color: <?php echo $warning_color; ?>; font-weight: bold; font-size: 1.2rem;"><?php echo $row['Quantity']; ?></td>
                                 <td><span style="background: <?php echo $warning_color; ?>; color: #fff; padding: 5px 10px; border-radius: 5px; font-size: 0.9rem;"><?php echo $warning_text; ?></span></td>
                             </tr>
-                            <?php } } else { echo '<tr><td colspan="4" style="text-align:center;">All products have sufficient stock.</td></tr>'; } ?>
+                            <?php 
+                                } 
+                            } else { 
+                                // Đã sửa colspan từ 4 xuống 3 cho vừa với số cột mới
+                                echo '<tr><td colspan="3" style="text-align:center;">All products have sufficient stock.</td></tr>'; 
+                            } 
+                            ?>
                         </tbody>
                     </table>
                 </div>
@@ -312,7 +330,6 @@ function parseOrderProducts($total_products_string) {
                         <thead>
                             <tr>
                                 <td>Product Name</td>
-                                <td>Current Stock (Now)</td>
                                 <td>Stock on <?php echo date('d-M-Y', strtotime($target_date)); ?></td>
                             </tr>
                         </thead>
@@ -337,7 +354,8 @@ function parseOrderProducts($total_products_string) {
                             $all_products = mysqli_query($conn, "SELECT Name, Quantity FROM products");
                             while($row = mysqli_fetch_assoc($all_products)) {
                                 $p_name = $row['Name'];
-                                $current_qty = (int)$row['Quantity'];
+                                // Vẫn phải giữ biến $current_qty ở ngầm bên dưới để làm mốc tính toán lùi về quá khứ
+                                $current_qty = (int)$row['Quantity']; 
                                 
                                 $s_after = isset($sold_after[$p_name]) ? $sold_after[$p_name] : 0;
                                 $i_after = isset($imported_after[$p_name]) ? $imported_after[$p_name] : 0;
@@ -346,7 +364,6 @@ function parseOrderProducts($total_products_string) {
                             ?>
                             <tr>
                                 <td><strong><?php echo $p_name; ?></strong></td>
-                                <td><?php echo $current_qty; ?></td>
                                 <td style="color: #8e44ad; font-weight: bold; font-size: 1.1rem;"><?php echo $past_qty; ?></td>
                             </tr>
                             <?php } ?>

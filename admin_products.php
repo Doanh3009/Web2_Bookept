@@ -41,11 +41,11 @@ if (isset($_GET['page'])) {
 
 // Thay thế đoạn if(isset($_POST['add_product'])) cũ bằng đoạn này:
 if (isset($_POST['add_product'])) {
-    $code = $_POST['ProductCode']; // Mã mới thêm
+    $code = ''; // Đã bỏ Product Code, gán rỗng
     $name = $_POST['Name'];
-    $import_price = $_POST['ImportPrice']; 
-    $profit_margin = $_POST['ProfitMargin']; 
-    $price = $import_price * (1 + ($profit_margin / 100));
+    $import_price = 0; // Mặc định = 0 khi tạo mới
+    $profit_margin = isset($_POST['ProfitMargin']) ? (float)$_POST['ProfitMargin'] : 0; 
+    $price = 0; // Mặc định giá bán = 0 khi tạo mới
     $image = $_FILES['Image']['name'];
     $image_tmp_name = $_FILES['Image']['tmp_name'];
     $author = $_POST['MainAuthor'];
@@ -53,19 +53,19 @@ if (isset($_POST['add_product'])) {
     $pub_year = $_POST['PublicationYear'];
     $language = $_POST['Language'];
     $cover =  $_POST['CoverType'];
-    $quantity = 0;
-    $unit = $_POST['Unit']; // Đơn vị tính mới thêm
+    $quantity = 0; // Mặc định = 0
+    $unit = ''; // Đã bỏ Unit, gán rỗng
     $des = $_POST['Description'];
     $cate = $_POST['CategoryId'];
-    $status = $_POST['Status']; // Hiện trạng
+    $status = $_POST['Status'];
 
-    // Cập nhật câu lệnh INSERT có ProductCode và Unit
+    // Câu lệnh INSERT được giữ nguyên cột để không báo lỗi Database
     $add_product_query = mysqli_query($conn, "INSERT INTO products(ProductCode, CategoryId, Name, ImportPrice, Price, Image, MainAuthor, Publisher, PublicationYear, Language, CoverType, Quantity, Unit, Description, SoldYet, Status)
          VALUES('$code', '$cate', '$name', '$import_price', '$price', '$image', '$author', '$publisher', '$pub_year', '$language', '$cover', '$quantity', '$unit', '$des', 'No', '$status')") or die('query failed');
 
     if ($add_product_query) {
         move_uploaded_file($image_tmp_name, "image/" . $image);
-        echo "<script>alert('Thêm sản phẩm thành công!');</script>";
+        echo "<script>alert('Add Product Success!');</script>";
     }
 }
 
@@ -323,21 +323,6 @@ if (isset($_GET['display'])) {
                                 <span class="form-message"></span>
                             </div>
                             
-                            <div class="form-group">
-                                <label class="form-label">Product Code</label>
-                                <input name="ProductCode" type="text" placeholder="E.g: B001" required class="form-control">
-                            </div>
-                            
-                            <div class="form-group">
-                                <label class="form-label">Unit</label>
-                                <input name="Unit" type="text" placeholder="E.g: books, sets..." required class="form-control">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="import-price" class="form-label">Initial Import Price ($)</label>
-                                <input id="import-price" name="ImportPrice" type="number" min="0" step="any" placeholder="Initial cost per unit" required class="form-control">
-                                <span class="form-message"></span>
-                            </div>
                             <div class="form-group">
                                 <label for="profit-margin" class="form-label">Profit Margin (%)</label>
                                 <input id="profit-margin" name="ProfitMargin" type="number" min="0" step="any" placeholder="E.g: 20 (for 20%)" required class="form-control">

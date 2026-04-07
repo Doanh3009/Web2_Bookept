@@ -30,7 +30,7 @@ if (isset($_POST['add_to_cart'])) {
 $products_per_page = 8;
 
 // Tính số trang dựa trên tổng số sản phẩm và số sản phẩm mỗi trang
-$total_products = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM `products`"));
+$total_products = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM `products` WHERE Status = '1'"));
 $total_pages = ceil($total_products / $products_per_page);
 
 // Lấy trang hiện tại từ tham số truyền vào hoặc mặc định là trang 1
@@ -134,7 +134,7 @@ $offset = ($current_page - 1) * $products_per_page;
         <h1 class="title">latest products</h1>
         <div class="box-container">
             <?php
-            $select_products = mysqli_query($conn, "SELECT products.*, category.CateName FROM `products` LEFT JOIN `category` ON products.CategoryId = category.CateId LIMIT $products_per_page OFFSET $offset") or die('query failed');
+            $select_products = mysqli_query($conn, "SELECT products.*, category.CateName FROM `products` LEFT JOIN `category` ON products.CategoryId = category.CateId WHERE products.Status = '1' LIMIT $products_per_page OFFSET $offset") or die('query failed');
             if (mysqli_num_rows($select_products) > 0) {
                 while ($fetch_products = mysqli_fetch_assoc($select_products)) {
                     if($fetch_products['Status'] == 1)

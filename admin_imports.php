@@ -126,7 +126,7 @@ if (isset($_GET['remove_item']) && isset($_GET['import_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Manage Imports</title>
+    <title>Admin_Bookept</title>
     <link href='image/Logo.png' rel='icon' type='image/x-icon' />
     <link rel="stylesheet" href="styles/admin/admin.css">
     <link rel="stylesheet" href="styles/admin/admin-reponsive.css">
@@ -303,10 +303,71 @@ if (isset($_GET['remove_item']) && isset($_GET['import_id'])) {
                             
                             <?php if (!$is_completed) { ?>
                             <div style="display: flex; gap: 15px; margin-top: 20px; justify-content: flex-end;">
-                                <a href="admin_imports.php" class="delete-btn" style="text-decoration: none;">Save Draft</a>
-                                <form method="POST" action="admin_imports.php">
+                                <style>
+                                    /* CSS cho nút Complete Receipt (Xanh lá - Nổi bật) */
+                                    .btn-complete-receipt {
+                                        background: linear-gradient(135deg, #2ecc71, #27ae60); 
+                                        color: #ffffff; 
+                                        font-weight: 600;
+                                        font-size: 15px;
+                                        padding: 10px 24px;
+                                        border: none;
+                                        border-radius: 8px; 
+                                        cursor: pointer;
+                                        box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3); 
+                                        transition: all 0.2s ease-in-out; 
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                    }
+                                    .btn-complete-receipt:hover {
+                                        background: linear-gradient(135deg, #27ae60, #219653); 
+                                        box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4); 
+                                        transform: translateY(-2px); 
+                                    }
+                                    .btn-complete-receipt:active {
+                                        transform: translateY(1px); 
+                                        box-shadow: 0 2px 5px rgba(39, 174, 96, 0.3); 
+                                    }
+
+                                    /* CSS cho nút Save Draft (Xám xanh - Thanh lịch, phụ trợ) */
+                                    .btn-save-draft {
+                                        background: linear-gradient(135deg, #95a5a6, #7f8c8d); /* Màu xám xanh thanh lịch */
+                                        color: #ffffff !important; /* Ép màu trắng cho thẻ a */
+                                        font-weight: 600;
+                                        font-size: 15px;
+                                        padding: 10px 24px;
+                                        border: none;
+                                        border-radius: 8px; 
+                                        cursor: pointer;
+                                        box-shadow: 0 4px 10px rgba(127, 140, 141, 0.3); 
+                                        transition: all 0.2s ease-in-out; 
+                                        display: inline-flex;
+                                        align-items: center;
+                                        gap: 8px;
+                                        text-decoration: none; /* Bỏ gạch chân của thẻ link */
+                                    }
+                                    .btn-save-draft:hover {
+                                        background: linear-gradient(135deg, #7f8c8d, #636e72); 
+                                        box-shadow: 0 6px 15px rgba(127, 140, 141, 0.4); 
+                                        transform: translateY(-2px); 
+                                        color: #ffffff;
+                                    }
+                                    .btn-save-draft:active {
+                                        transform: translateY(1px); 
+                                        box-shadow: 0 2px 5px rgba(127, 140, 141, 0.3); 
+                                    }
+                                </style>
+
+                                <a href="admin_imports.php" class="btn-save-draft">
+                                    <i class="fa fa-save" style="font-size: 16px;"></i> Save Draft
+                                </a>
+
+                                <form method="POST" action="admin_imports.php" style="margin: 0;">
                                     <input type="hidden" name="import_id" value="<?php echo $import_id; ?>">
-                                    <button type="submit" name="complete_import" class="option-btn" style="background-color: #27ae60;" onclick="return confirm('Are you sure? This will update the inventory and cannot be undone.');">Complete Receipt</button>
+                                    <button type="submit" name="complete_import" class="btn-complete-receipt" onclick="return confirm('Are you sure? This will update the inventory and cannot be undone.');">
+                                        <i class="fa fa-check-circle" style="font-size: 16px;"></i> Complete Receipt
+                                    </button>
                                 </form>
                             </div>
                             <?php } else { ?>

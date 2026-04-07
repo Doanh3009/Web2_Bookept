@@ -172,7 +172,7 @@ if (isset($_POST['add_to_cart'])) {
          <div class="box-container">
             <?php
             // Truy vấn lấy sản phẩm có hiển thị cả Thể loại (CateName)
-            $select_products = mysqli_query($conn, "SELECT products.*, category.CateName FROM `products` LEFT JOIN `category` ON products.CategoryId = category.CateId LIMIT 8") or die('query failed');
+            $select_products = mysqli_query($conn, "SELECT products.*, category.CateName FROM `products` LEFT JOIN `category` ON products.CategoryId = category.CateId WHERE products.Status = '1' LIMIT 8") or die('query failed');
             if (mysqli_num_rows($select_products) > 0) {
                while ($fetch_products = mysqli_fetch_assoc($select_products)) {
             ?>

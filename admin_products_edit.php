@@ -7,32 +7,16 @@ if (!isset($admin_id)) {
     header('Location:login_admin.php');
     exit();
 }
-// if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-//     // Lấy dữ liệu từ form
-//     $name = $_POST['name'];
-//     $email = $_POST['email'];
-//     $password = $_POST['password'];
-//     $phone_number = $_POST['phone_number'];
-//     $insert_query = "INSERT INTO users (name, email, password, user_type, phone_number) VALUES ('$name', '$email', '$password', '$user_type', '$phone_number')";
-//     header('Location: admin_products.php');
-//     exit();
-// }
-//search
-// if (isset($_GET['submit_search'])) 
-// {
-//     $search=$_GET['text_search'];
-//     $sql_tk="SELECT * FROM users WHERE name LIKE '%" . $search . "%'";
-//     $sql_search= mysqli_query($conn,$sql_tk);
-// }
-// else
-// {
-//     $search='';
-//     $sql_tk="SELECT* FROM users limit 5";
-//     $sql_search= mysqli_query($conn,$sql_tk);
 
-// }
-// xóa 
-$update_id = $_GET['edit_product'];
+// 1. CHẶN LỖI: Kiểm tra xem URL có chứa edit_product không
+if (isset($_GET['edit_product'])) {
+    $update_id = $_GET['edit_product'];
+} else {
+    // Nếu mất ID (do user tự xóa URL hoặc lỗi form), đuổi về trang chủ quản lý ngay lập tức
+    header('Location: admin_products.php');
+    exit();
+}
+
 if (isset($_POST['edit'])) {
     $update_name = $_POST['Name'];
     $update_cate = $_POST['CategoryId'];
@@ -71,9 +55,10 @@ if (isset($_POST['edit'])) {
     if (!empty($update_image)) {
         mysqli_query($conn, "UPDATE products SET Image = '$update_image' WHERE id = '$update_id'") or die('query failed');
         move_uploaded_file($_FILES["Image"]["tmp_name"], "image/" . $_FILES["Image"]["name"]);
-        unlink('image/' . $update_old_image);
+        // unlink('image/' . $update_old_image); // Cân nhắc mở lại nếu muốn xoá ảnh cũ trong folder
     }
     header('location:admin_products.php');
+    exit();
 }
 
 ?>
@@ -91,7 +76,7 @@ if (isset($_POST['edit'])) {
 
 
     <link rel="stylesheet" href="">
-    <title>Quản lý cửa hàng</title>
+    <title>Admin_Bookept</title>
 </head>
 
 
@@ -109,7 +94,7 @@ if (isset($_POST['edit'])) {
                     <li id="main" class="sidebar-list-item tab-content active">
                         <a href="admin_main.php" class="sidebar-link">
                             <div class="sidebar-icon"><i class="fa fa-home"></i></div>
-                            <div class="hidden-sidebar">Over view </div>
+                            <div class="hidden-sidebar">Overview</div>
                         </a>
                     </li>
                     <li class="sidebar-list-item tab-content">
@@ -164,7 +149,7 @@ if (isset($_POST['edit'])) {
             <div class="section product-all active">
                 <div class="admin-control">
                     <div class="admin-control-center">
-                        <form method="get" class="form-search">
+                        <form action="admin_products.php" method="get" class="form-search">
                             <input type="hidden" name="search" value="<?php echo isset($_GET['search']) ? $_GET['search'] : ''; ?>">
                             <span class="search-btn"><i class="fa fa-search"></i></span>
                             <input id="form-search-product" type="text" name="search" class="form-search-input" placeholder="Search book name...">
@@ -172,24 +157,17 @@ if (isset($_POST['edit'])) {
                         </form>
                     </div>
                     <div class="admin-control-right">
-                        <button class="btn-control-large" id="btn-add-product"><i class="fa fa-plus"></i> Add new product</button>
+                        <button class="btn-control-large" id="btn-add-product" onclick="window.location.href='admin_products.php'"><i class="fa fa-plus"></i> Add new product</button>
                     </div>
                 </div>
                 <div id="show-product">
                     <?php
                     $products_per_page = 8;
-
-                    // Tính số trang dựa trên tổng số sản phẩm và số sản phẩm mỗi trang
                     $total_products = mysqli_num_rows(mysqli_query($conn, "SELECT * FROM `products`"));
                     $total_pages = ceil($total_products / $products_per_page);
-
-                    // Lấy trang hiện tại từ tham số truyền vào hoặc mặc định là trang 1
                     $current_page = isset($_GET['page']) ? $_GET['page'] : 1;
-
-                    // Tính offset (bắt đầu lấy từ vị trí nào trong cơ sở dữ liệu)
                     $offset = ($current_page - 1) * $products_per_page;
                     $select_products = mysqli_query($conn, "SELECT * FROM `products` LIMIT $offset, $products_per_page") or die('query failed');
-
 
                     if (mysqli_num_rows($select_products) > 0) {
                         while ($fetch_products = mysqli_fetch_assoc($select_products)) {
@@ -252,17 +230,19 @@ if (isset($_POST['edit'])) {
 
             </div>
         </main>
+        
         <input type="hidden" id="edit-product-id" name="edit_product_id">
         <div class="modal edit-product open">
             <div class="modal-container">
                 <h3 class="modal-container-title edit-product-e">EDIT PRODUCT</h3>
-                <a href="admin_products.php"><button class="modal-close product-form"><i class="fa fa-times"></i></button></a>
+                <button type="button" onclick="window.location.href='admin_products.php';" class="modal-close product-form"><i class="fa fa-times"></i></button>
+                
                 <div class="modal-content">
                     <form action="" method="post" class="add-product-form" enctype="multipart/form-data">
                         <div class="modal-content-left">
                             <?php
-                            $product_id = $_GET['edit_product'];
-                            $sql_product = mysqli_query($conn, "SELECT * FROM products WHERE Id = '$product_id'");
+                            // Sử dụng lại biến $update_id đã được kiểm tra tính an toàn ở đầu file
+                            $sql_product = mysqli_query($conn, "SELECT * FROM products WHERE Id = '$update_id'");
 
                             if (mysqli_num_rows($sql_product) > 0) {
                                 while ($fetch_products_edit = mysqli_fetch_assoc($sql_product)) {
@@ -299,7 +279,6 @@ if (isset($_POST['edit'])) {
                                     ?>
                                     <span class="form-message"></span>
                             </div>
-                            <!-- Price -->
                             <?php 
                                 $import_p = isset($fetch_products_edit['ImportPrice']) ? $fetch_products_edit['ImportPrice'] : 0;
                                 $sell_p = $fetch_products_edit['Price'];
@@ -342,7 +321,6 @@ if (isset($_POST['edit'])) {
                                     </option>
                                 </select>
                             </div>
-                            <!-- Author -->
                             <div class="form-group">
                                 <label for="author" class="form-label">Author</label>
                                 <input id="author" name="MainAuthor" type="text" value="<?php echo $fetch_products_edit['MainAuthor'] ?>" class="form-control">

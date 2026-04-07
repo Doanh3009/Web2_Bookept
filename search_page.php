@@ -146,7 +146,7 @@ $search_keyword = isset($_GET['search']) ? $_GET['search'] : '';
          $initial_page = ($page_number - 1) * $limit;
 
          // 1. TẠO CÂU TRUY VẤN GỐC
-         $sql = "SELECT products.*, category.CateName FROM products LEFT JOIN category ON products.CategoryId = category.CateId WHERE 1=1 ";
+         $sql = "SELECT products.*, category.CateName FROM products LEFT JOIN category ON products.CategoryId = category.CateId WHERE products.Status = '1' ";
 
          // 2. NỐI THÊM BỘ LỌC NẾU CÓ TÌM KIẾM (Đã chuyển từ $_POST sang $_GET)
          if (isset($_GET['category_name']) && !empty($_GET['category_name'])) {

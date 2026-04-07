@@ -17,7 +17,7 @@ if (!isset($admin_id)) {
    <link rel="stylesheet" href="styles/admin/admin.css">
    <link rel="stylesheet" href="styles/admin/admin-reponsive.css">
    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-   <title>Order Management</title>
+   <title>Admin_Bookept</title>
 </head>
 <body>
    <?php include 'admin_header.php'; ?>

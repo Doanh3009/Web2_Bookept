@@ -53,7 +53,7 @@ if (isset($_POST['add_product'])) {
     $pub_year = $_POST['PublicationYear'];
     $language = $_POST['Language'];
     $cover =  $_POST['CoverType'];
-    $quantity = $_POST['Quantity'];
+    $quantity = 0;
     $unit = $_POST['Unit']; // Đơn vị tính mới thêm
     $des = $_POST['Description'];
     $cate = $_POST['CategoryId'];
@@ -111,7 +111,7 @@ if (isset($_GET['display'])) {
 
 
     <link rel="stylesheet" href="">
-    <title>Quản lý cửa hàng</title>
+    <title>Admin_Bookept</title>
 </head>
 
 
@@ -336,11 +336,6 @@ if (isset($_GET['display'])) {
                             <div class="form-group">
                                 <label for="import-price" class="form-label">Initial Import Price ($)</label>
                                 <input id="import-price" name="ImportPrice" type="number" min="0" step="any" placeholder="Initial cost per unit" required class="form-control">
-                                <span class="form-message"></span>
-                            </div>
-                            <div class="form-group">
-                                <label for="quantity" class="form-label">Initial Quantity (First time only)</label>
-                                <input id="quantity" name="Quantity" value="0" type="number" min="0" required class="form-control">
                                 <span class="form-message"></span>
                             </div>
                             <div class="form-group">

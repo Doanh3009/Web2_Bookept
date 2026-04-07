@@ -8,6 +8,41 @@ if (!isset($admin_id)) {
     exit();
 }
 
+// ==========================================
+// XỬ LÝ LƯU TRỮ TRẠNG THÁI TÌM KIẾM (SESSION)
+// ==========================================
+
+// 1. Nếu người dùng bấm "Reset All"
+if (isset($_GET['reset'])) {
+    unset($_SESSION['stats_threshold']);
+    unset($_SESSION['stats_ie_start']);
+    unset($_SESSION['stats_ie_end']);
+    unset($_SESSION['stats_target_date']);
+    header("Location: admin_stats.php");
+    exit();
+}
+
+// 2. Lưu trạng thái Low Stock
+if (isset($_GET['threshold'])) {
+    $_SESSION['stats_threshold'] = (int)$_GET['threshold'];
+}
+$threshold = isset($_SESSION['stats_threshold']) ? $_SESSION['stats_threshold'] : 10;
+
+// 3. Lưu trạng thái Import/Export
+if (isset($_GET['ie_start']) && isset($_GET['ie_end'])) {
+    $_SESSION['stats_ie_start'] = $_GET['ie_start'];
+    $_SESSION['stats_ie_end'] = $_GET['ie_end'];
+}
+$start_date = isset($_SESSION['stats_ie_start']) ? $_SESSION['stats_ie_start'] : date('Y-m-01');
+$end_date = isset($_SESSION['stats_ie_end']) ? $_SESSION['stats_ie_end'] : date('Y-m-d');
+
+// 4. Lưu trạng thái Lookup Stock
+if (isset($_GET['target_date'])) {
+    $_SESSION['stats_target_date'] = $_GET['target_date'];
+}
+$target_date = isset($_SESSION['stats_target_date']) ? $_SESSION['stats_target_date'] : '';
+
+
 // Hàm hỗ trợ: Bóc tách chuỗi total_products của bảng orders
 function parseOrderProducts($total_products_string) {
     $parsed_items = [];
@@ -36,7 +71,7 @@ function parseOrderProducts($total_products_string) {
     <link rel="stylesheet" href="styles/admin/admin.css">
     <link rel="stylesheet" href="styles/admin/admin-reponsive.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    <title>Statistical Reports</title>
+    <title>Admin_Bookept</title>
     <style>
         .report-card {
             background: #fff;
@@ -58,6 +93,14 @@ function parseOrderProducts($total_products_string) {
             gap: 15px;
             align-items: flex-end;
             margin-bottom: 20px;
+        }
+        .detail-item a:hover {
+            text-decoration: underline !important;
+            opacity: 0.8;
+        }
+        .report-card details ul {
+            border-left: 2px solid #eee;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -102,12 +145,8 @@ function parseOrderProducts($total_products_string) {
 
                 <div class="report-card">
                     <h2 class="report-title"><i class="fa fa-exclamation-triangle" style="color: #e63946;"></i> Low Stock Alert</h2>
-                    <?php $threshold = isset($_GET['threshold']) ? (int)$_GET['threshold'] : 10; ?>
+                    
                     <form method="GET" class="report-form">
-                        <?php if(isset($_GET['ie_start'])) echo '<input type="hidden" name="ie_start" value="'.$_GET['ie_start'].'">'; ?>
-                        <?php if(isset($_GET['ie_end'])) echo '<input type="hidden" name="ie_end" value="'.$_GET['ie_end'].'">'; ?>
-                        <?php if(isset($_GET['target_date'])) echo '<input type="hidden" name="target_date" value="'.$_GET['target_date'].'">'; ?>
-                        
                         <div>
                             <label class="form-label">Set Low Stock Threshold (Units):</label>
                             <input type="number" name="threshold" value="<?php echo $threshold; ?>" min="0" class="form-control" style="width: 200px;">
@@ -145,14 +184,8 @@ function parseOrderProducts($total_products_string) {
 
                 <div class="report-card">
                     <h2 class="report-title"><i class="fa fa-exchange" style="color: #4361ee;"></i> Import / Export Report</h2>
-                    <?php 
-                        $start_date = isset($_GET['ie_start']) ? $_GET['ie_start'] : date('Y-m-01'); // Default 1st of month
-                        $end_date = isset($_GET['ie_end']) ? $_GET['ie_end'] : date('Y-m-d');
-                    ?>
+                    
                     <form method="GET" class="report-form">
-                        <?php if(isset($_GET['threshold'])) echo '<input type="hidden" name="threshold" value="'.$_GET['threshold'].'">'; ?>
-                        <?php if(isset($_GET['target_date'])) echo '<input type="hidden" name="target_date" value="'.$_GET['target_date'].'">'; ?>
-
                         <div><label class="form-label">From Date:</label><input type="date" name="ie_start" value="<?php echo $start_date; ?>" class="form-control"></div>
                         <div><label class="form-label">To Date:</label><input type="date" name="ie_end" value="<?php echo $end_date; ?>" class="form-control"></div>
                         <button type="submit" class="option-btn" style="margin:0; padding: 10px 20px;">Generate Report</button>
@@ -168,36 +201,88 @@ function parseOrderProducts($total_products_string) {
                         </thead>
                         <tbody>
                             <?php
-                            if (isset($_GET['ie_start'])) {
-                                // 1. Calculate Imports in range
+                            // Kiểm tra biến session thay vì $_GET
+                            if (isset($_SESSION['stats_ie_start'])) {
                                 $import_data = [];
-                                $imports_q = mysqli_query($conn, "SELECT d.ProductId, p.Name, SUM(d.Quantity) as total_in FROM import_details d JOIN imports i ON d.ImportId = i.Id JOIN products p ON d.ProductId = p.Id WHERE i.Status = 1 AND DATE(i.ImportDate) BETWEEN '$start_date' AND '$end_date' GROUP BY d.ProductId");
-                                while($row = mysqli_fetch_assoc($imports_q)) {
-                                    $import_data[$row['Name']] = $row['total_in'];
-                                }
-
-                                // 2. Calculate Exports in range
                                 $export_data = [];
-                                $orders_q = mysqli_query($conn, "SELECT total_products FROM orders WHERE payment_status = 'Delivered' AND placed_on BETWEEN '$start_date' AND '$end_date'");
-                                while($row = mysqli_fetch_assoc($orders_q)) {
-                                    $parsed = parseOrderProducts($row['total_products']);
-                                    foreach($parsed as $name => $qty) {
-                                        if(!isset($export_data[$name])) $export_data[$name] = 0;
-                                        $export_data[$name] += $qty;
-                                    }
-                                }
 
-                                // 3. Merge and display
+                               // 1. LẤY CHI TIẾT PHIẾU NHẬP
+                                    $imports_q = mysqli_query($conn, "SELECT d.ProductId, p.Name, d.Quantity, i.Id as ReceiptId, i.ImportDate 
+                                                                    FROM import_details d 
+                                                                    JOIN imports i ON d.ImportId = i.Id 
+                                                                    JOIN products p ON d.ProductId = p.Id 
+                                                                    WHERE i.Status = 1 AND DATE(i.ImportDate) BETWEEN '$start_date' AND '$end_date'");
+                                    while($row = mysqli_fetch_assoc($imports_q)) {
+                                        $p_name = $row['Name'];
+                                        if(!isset($import_data[$p_name])) {
+                                            $import_data[$p_name] = ['total' => 0, 'details' => []];
+                                        }
+                                        $import_data[$p_name]['total'] += $row['Quantity'];
+                                        
+                                        $link = "admin_imports.php?action=edit&id=" . $row['ReceiptId'];
+                                        $import_data[$p_name]['details'][] = "<a href='$link' style='color: #8e44ad; text-decoration: none; font-weight: 500;'>Receipt #{$row['ReceiptId']} ({$row['ImportDate']}): +{$row['Quantity']}</a>";
+                                    }
+
+                                    // 2. LẤY CHI TIẾT ĐƠN HÀNG XUẤT
+                                    $orders_q = mysqli_query($conn, "SELECT id as OrderId, placed_on, total_products 
+                                                                    FROM orders 
+                                                                    WHERE payment_status = 'Delivered' AND placed_on BETWEEN '$start_date' AND '$end_date'");
+                                    while($row = mysqli_fetch_assoc($orders_q)) {
+                                        $parsed = parseOrderProducts($row['total_products']);
+                                        foreach($parsed as $name => $qty) {
+                                            if(!isset($export_data[$name])) {
+                                                $export_data[$name] = ['total' => 0, 'details' => []];
+                                            }
+                                            $export_data[$name]['total'] += $qty;
+                                            
+                                            $link_order = "admin_orders.php";
+                                            $export_data[$name]['details'][] = "<a href='$link_order' style='color: #e63946; text-decoration: none; font-weight: 500;'>Order #{$row['OrderId']} ({$row['placed_on']}): -{$qty}</a>";
+                                        }
+                                    }
+
+                                // 3. HIỂN THỊ GỘP & CHI TIẾT
                                 $all_product_names = array_unique(array_merge(array_keys($import_data), array_keys($export_data)));
                                 if (count($all_product_names) > 0) {
                                     foreach ($all_product_names as $p_name) {
-                                        $in = isset($import_data[$p_name]) ? $import_data[$p_name] : 0;
-                                        $out = isset($export_data[$p_name]) ? $export_data[$p_name] : 0;
+                                        $in_total = isset($import_data[$p_name]) ? $import_data[$p_name]['total'] : 0;
+                                        $out_total = isset($export_data[$p_name]) ? $export_data[$p_name]['total'] : 0;
                             ?>
                                 <tr>
                                     <td><strong><?php echo $p_name; ?></strong></td>
-                                    <td style="color: green; font-weight: bold;">+<?php echo $in; ?></td>
-                                    <td style="color: red; font-weight: bold;">-<?php echo $out; ?></td>
+                                    <td>
+                                        <details>
+                                            <summary style="cursor:pointer; color: green; font-weight: bold; outline:none;">
+                                                +<?php echo $in_total; ?> <i class="fa fa-caret-down" style="font-size: 12px;"></i>
+                                            </summary>
+                                            <ul style="list-style:none; padding-left:10px; margin-top:5px; font-size: 13px;">
+                                                <?php 
+                                                if($in_total > 0) {
+                                                    foreach($import_data[$p_name]['details'] as $detail) {
+                                                        echo "<li class='detail-item' style='margin-bottom: 5px;'>$detail</li>"; 
+                                                    }
+                                                } else {
+                                                    echo "<li style='color: #999;'>No imports</li>";
+                                                }
+                                                ?>
+                                            </ul>
+                                        </details>
+                                    </td>
+                                    <td>
+                                        <details>
+                                            <summary style="cursor:pointer; color: red; font-weight: bold; outline:none;">
+                                                -<?php echo $out_total; ?> <i class="fa fa-caret-down" style="font-size: 12px;"></i>
+                                            </summary>
+                                            <ul style="list-style:none; padding-left:10px; margin-top:5px; font-size: 13px; color: #555;">
+                                                <?php 
+                                                if($out_total > 0) {
+                                                    foreach($export_data[$p_name]['details'] as $detail) echo "<li>$detail</li>"; 
+                                                } else {
+                                                    echo "<li>No sales</li>";
+                                                }
+                                                ?>
+                                            </ul>
+                                        </details>
+                                    </td>
                                 </tr>
                             <?php 
                                     }
@@ -212,19 +297,14 @@ function parseOrderProducts($total_products_string) {
                     <h2 class="report-title"><i class="fa fa-history" style="color: #8e44ad;"></i> Historical Inventory Lookup</h2>
                     <p style="font-size: 0.9rem; color: var(--medium-gray); margin-bottom: 15px;">Check how many units were in stock at the end of a specific past date.</p>
                     
-                    <?php $target_date = isset($_GET['target_date']) ? $_GET['target_date'] : ''; ?>
                     <form method="GET" class="report-form">
-                        <?php if(isset($_GET['threshold'])) echo '<input type="hidden" name="threshold" value="'.$_GET['threshold'].'">'; ?>
-                        <?php if(isset($_GET['ie_start'])) echo '<input type="hidden" name="ie_start" value="'.$_GET['ie_start'].'">'; ?>
-                        <?php if(isset($_GET['ie_end'])) echo '<input type="hidden" name="ie_end" value="'.$_GET['ie_end'].'">'; ?>
-
                         <div>
                             <label class="form-label">Select Date in the Past:</label>
                             <input type="date" name="target_date" value="<?php echo $target_date; ?>" max="<?php echo date('Y-m-d'); ?>" class="form-control" style="width: 200px;" required>
                         </div>
                         <button type="submit" class="option-btn" style="margin:0; padding: 10px 20px;">Lookup Stock</button>
                         
-                        <a href="admin_stats.php" class="delete-btn" style="text-decoration:none; padding: 10px 15px; margin-left: 5px;"><i class="fa fa-refresh"></i> Reset All</a>
+                        <a href="admin_stats.php?reset=1" class="delete-btn" style="text-decoration:none; padding: 10px 15px; margin-left: 5px;"><i class="fa fa-refresh"></i> Reset All</a>
                     </form>
 
                     <?php if ($target_date != '') { ?>
@@ -238,7 +318,6 @@ function parseOrderProducts($total_products_string) {
                         </thead>
                         <tbody>
                             <?php
-                            // Get all sold items AFTER target date
                             $sold_after = [];
                             $orders_q = mysqli_query($conn, "SELECT total_products FROM orders WHERE payment_status = 'Delivered' AND placed_on > '$target_date'");
                             while($row = mysqli_fetch_assoc($orders_q)) {
@@ -249,14 +328,12 @@ function parseOrderProducts($total_products_string) {
                                 }
                             }
 
-                            // Get all imported items AFTER target date
                             $imported_after = [];
                             $imports_q = mysqli_query($conn, "SELECT p.Name, SUM(d.Quantity) as total_in FROM import_details d JOIN imports i ON d.ImportId = i.Id JOIN products p ON d.ProductId = p.Id WHERE i.Status = 1 AND DATE(i.ImportDate) > '$target_date' GROUP BY d.ProductId");
                             while($row = mysqli_fetch_assoc($imports_q)) {
                                 $imported_after[$row['Name']] = $row['total_in'];
                             }
 
-                            // Calculate past stock for all products
                             $all_products = mysqli_query($conn, "SELECT Name, Quantity FROM products");
                             while($row = mysqli_fetch_assoc($all_products)) {
                                 $p_name = $row['Name'];
@@ -265,7 +342,6 @@ function parseOrderProducts($total_products_string) {
                                 $s_after = isset($sold_after[$p_name]) ? $sold_after[$p_name] : 0;
                                 $i_after = isset($imported_after[$p_name]) ? $imported_after[$p_name] : 0;
                                 
-                                // Reverse Algorithm: Past = Current + Sold(since then) - Imported(since then)
                                 $past_qty = $current_qty + $s_after - $i_after;
                             ?>
                             <tr>
@@ -284,16 +360,14 @@ function parseOrderProducts($total_products_string) {
     </div>
     <script src="js/admin.js"></script>
     <script>
-        // 1. Khi trang vừa load xong, kiểm tra xem có vị trí cuộn nào được lưu không
         document.addEventListener("DOMContentLoaded", function(event) { 
             let scrollpos = sessionStorage.getItem('scrollpos');
             if (scrollpos) {
-                window.scrollTo(0, scrollpos); // Cuộn mượt mà đến vị trí cũ
-                sessionStorage.removeItem('scrollpos'); // Xóa đi để không bị lỗi khi sang trang khác
+                window.scrollTo(0, scrollpos);
+                sessionStorage.removeItem('scrollpos');
             }
         });
 
-        // 2. Chỉ khi người dùng bấm nút Submit (gửi form), mới lưu lại vị trí cuộn
         window.addEventListener("submit", function() {
             sessionStorage.setItem('scrollpos', window.scrollY);
         });

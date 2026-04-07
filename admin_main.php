@@ -86,7 +86,7 @@ if (isset($_GET['unblock'])) {
 
 
     <link rel="stylesheet" href="">
-    <title>Quản lý cửa hàng</title>
+    <title>Admin_Bookept</title>
 </head>
 
 <body>
